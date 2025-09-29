@@ -113,8 +113,9 @@
                  class="border-4 border-dashed rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition duration-300"
                  :class="{'bg-fuchsia-100 border-fuchsia-600 shadow-lg': isDragOver, 'border-gray-300 bg-white hover:border-fuchsia-400': !isDragOver}"
                  @dragenter="isDragOver = true" @dragleave="isDragOver = false"
-                 @click="$refs.fileInput.click()">
-                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="isLoading">
+                 @click="$refs.fileInput.click()"
+                 :disabled="!isFfmpegLoaded || isLoading">
+                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="!isFfmpegLoaded || isLoading">
                 
                 <svg class="mx-auto h-16 w-16 text-fuchsia-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -314,9 +315,6 @@
 
 <script type="text/javascript">
     const { ref, reactive, computed, createApp, nextTick } = Vue;
-    // FFmpeg variable destructuring was moved inside the setup function to ensure 
-    // the external script has a chance to load the global 'FFmpeg' object, 
-    // resolving the ReferenceError.
 
     createApp({
         setup() {
@@ -345,7 +343,7 @@
             
             const APP_PREFIX = "StatusMantra_"; 
             let ffmpeg = null; // FFmpeg instance
-            let isFfmpegLoaded = ref(false);
+            const isFfmpegLoaded = ref(false);
 
             // --- Computed ---
             const originalFileSize = computed(() => formatSize(originalFile.size));
@@ -403,26 +401,34 @@
                 runFFmpeg(file);
             }
             
-            // --- FFmpeg WASM Core Initialization ---
+            // --- FFmpeg WASM Core Initialization (Improved with Retry) ---
             async function loadFFmpeg() {
                 // Ensure this only runs once
                 if (ffmpeg) {
                     isFfmpegLoaded.value = true;
                     return;
                 }
-                
-                // Safety check: if createFFmpeg is still not defined, something is wrong with the external script load.
-                if (!createFFmpeg) {
-                    error.value = "FFmpeg Core could not be accessed. Please check your browser or connection.";
+
+                // Wait for the external script to load (up to 5 seconds)
+                let attempts = 0;
+                while (typeof window.FFmpeg === 'undefined' && attempts < 10) {
+                    attempts++;
+                    loadingMessage.value = `Attempt ${attempts}/10: Waiting for FFmpeg library...`;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (typeof window.FFmpeg === 'undefined') {
+                    error.value = "FFmpeg library file could not be loaded from CDN. Check your internet connection.";
                     currentProcessStep.value = 0;
                     isLoading.value = false;
                     return;
                 }
-
+                
+                const { createFFmpeg } = window.FFmpeg; // Destructure again after ensuring it's available
 
                 isLoading.value = true;
                 currentProcessStep.value = -1;
-                loadingMessage.value = "Initializing FFmpeg WASM Core (This takes a moment)...";
+                loadingMessage.value = "Initializing FFmpeg WASM Core (This may take up to 20 seconds)...";
 
                 try {
                     ffmpeg = createFFmpeg({ 
@@ -439,13 +445,26 @@
                         }
                     });
 
-                    await ffmpeg.load();
-                    isFfmpegLoaded.value = true;
+                    // Load with a maximum of 3 retries for stability
+                    let loadAttempts = 0;
+                    while (!isFfmpegLoaded.value && loadAttempts < 3) {
+                        loadAttempts++;
+                        try {
+                            loadingMessage.value = `Initializing FFmpeg Core... Attempt ${loadAttempts}/3`;
+                            await ffmpeg.load();
+                            isFfmpegLoaded.value = true;
+                        } catch (e) {
+                            console.warn(`FFmpeg Load attempt ${loadAttempts} failed. Retrying...`, e);
+                            if (loadAttempts === 3) throw e;
+                            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3s before retry
+                        }
+                    }
+
                     loadingMessage.value = '✅ FFmpeg Core Loaded! Upload your file to start.';
                     
                 } catch (e) {
                     console.error("FFmpeg Load Error:", e);
-                    error.value = `FFmpeg failed to load. Please ensure your browser supports WASM. Error: ${e.message}`;
+                    error.value = `FFmpeg failed to load after multiple attempts. Please ensure your browser supports WASM. Error: ${e.message}`;
                 } finally {
                     isLoading.value = false;
                     currentProcessStep.value = 0; // Ready for upload
@@ -455,7 +474,7 @@
             // --- FFmpeg Execution Logic (Real Compression) ---
             async function runFFmpeg(file) {
                 if (!ffmpeg) {
-                    error.value = "FFmpeg is not initialized.";
+                    error.value = "FFmpeg is not initialized. Please refresh.";
                     return;
                 }
                 
@@ -646,7 +665,7 @@
             return {
                 // State & Settings
                 isLoading, loadingMessage, error, progress, isDragOver, currentProcessStep,
-                originalFile, originalFileSize, compressedFiles,
+                originalFile, originalFileSize, compressedFiles, isFfmpegLoaded,
                 isSettingsOpen, settings,
                 
                 // Gemini State
