@@ -34,12 +34,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
-        /* Padding bottom needs to clear the fixed bottom ad (60px) and the footer (~52px). */
-        main {
-            /* Adjusted padding to make sure content is not hidden behind fixed elements */
-            padding-top: 10px; /* Adjust if needed */
-            padding-bottom: 130px; 
-        }
         /* Fixed ad height */
         .ad-slot-fixed {
             height: 60px;
@@ -51,12 +45,27 @@
             align-items: center;
             height: 100%;
         }
+        /* Main content padding must clear both the top sticky ad (60px) and the top sticky header (80px tall) 
+           and the bottom fixed ad (60px) plus the footer (56px) */
+        main {
+            padding-top: 10px; 
+            /* 60px (bottom ad) + 40px (footer height approx) + 10px (margin) = 110px. Let's make it 120px for safety. */
+            padding-bottom: 120px; 
+        }
+
+        /* Footer must be relative/absolute to appear at the absolute bottom of the scrollable page content.
+           However, to match the fixed ad, we will keep the ad fixed and make sure the footer is visible.
+        */
+        .fixed-footer-height {
+            height: 40px; /* Approximate height of the footer */
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-800">
 
 <!-- ------------------------------------------------------------------ -->
 <!-- TOP AD SLOT: Fixed 468x60 Banner (Sticky) - AdZilla Integration -->
+<!-- The top ad remains sticky below the very top of the viewport (top: 0) -->
 <!-- ------------------------------------------------------------------ -->
 <div class="ad-slot-top w-full text-center shadow-md sticky top-0 z-20 overflow-hidden ad-slot-fixed bg-white border-b border-gray-200">
     <div class="ad-slot-container">
@@ -79,6 +88,7 @@
 <div id="app" v-cloak class="min-h-screen flex flex-col items-center">
 
     <!-- Header -->
+    <!-- The header is sticky, positioned right below the top ad (top: 60px) -->
     <header class="w-full header-bg shadow-2xl sticky top-[60px] z-10">
         <div class="container mx-auto p-4 max-w-4xl flex justify-between items-center text-white">
             <h1 class="text-3xl font-extrabold tracking-tight">
@@ -94,7 +104,7 @@
 
     <main class="container mx-auto p-4 md:p-8 w-full max-w-4xl flex-grow">
 
-        <!-- Primary Action Card -->
+        <!-- Primary Action Card (Content) -->
         <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-3xl mb-8 border-b-8 border-fuchsia-500 card-shadow">
             <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-4 text-center">
                 Optimize Your Status to <span class="text-fuchsia-600">HD!</span>
@@ -234,11 +244,22 @@
         <!-- Processing History Section (Omitted for brevity, assumed functional) -->
 
     </main>
-    
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- FIXED FOOTER (This now sits at the very bottom, fixed to the viewport) -->
+    <!-- ------------------------------------------------------------------ -->
+    <footer class="w-full bg-gray-900 shadow-inner p-2 text-center fixed bottom-0 left-0 right-0 z-50 fixed-footer-height">
+        <p class="text-sm font-medium text-white">
+            &copy;2025 NancySocialSolutions. All rights reserved.
+        </p>
+    </footer>
+
     <!-- ------------------------------------------------------------------ -->
     <!-- BOTTOM AD SLOT: Fixed 468x60 Banner - AdZilla Integration -->
+    <!-- Positioned fixed at the bottom, RIGHT ABOVE the fixed footer. -->
+    <!-- The footer is 40px tall, so the ad is positioned at bottom: 40px. -->
     <!-- ------------------------------------------------------------------ -->
-    <div class="ad-slot-bottom w-full shadow-2xl fixed bottom-[56px] left-0 right-0 z-40 overflow-hidden ad-slot-fixed bg-gray-900/90 border-t border-gray-700">
+    <div class="ad-slot-bottom w-full shadow-2xl fixed bottom-[40px] left-0 right-0 z-40 overflow-hidden ad-slot-fixed bg-gray-900/90 border-t border-gray-700">
         <div class="ad-slot-container">
             <!-- START Real Ad Code (468x60 Banner) -->
             <script type="text/javascript">
@@ -255,13 +276,6 @@
         </div>
     </div>
     <!-- ------------------------------------------------------------------ -->
-
-    <!-- FIXED FOOTER -->
-    <footer class="w-full bg-gray-900 shadow-inner p-4 text-center fixed bottom-0 left-0 right-0 z-50">
-        <p class="text-sm font-medium text-white">
-            &copy; 2025 NancySocialSolutions. All rights reserved.
-        </p>
-    </footer>
 
 
     <!-- Settings Modal -->
