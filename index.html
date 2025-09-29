@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
     <!-- FFmpeg.WASM Library Import (Placeholder for real execution) -->
+    <!-- In a live environment, you would use: <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/ffmpeg.min.js"></script> -->
 
     <style>
         /* Custom Scrollbar */
@@ -45,14 +46,40 @@
 <body class="bg-gray-50 font-sans antialiased text-gray-800">
 
 <!-- ------------------------------------------------------------------ -->
-<!-- TOP AD SLOT: Placeholder (468x60) - Since a dedicated banner script was not provided for the new link. -->
+<!-- TOP AD SLOT: ADVERTISEMENT CODE HERE (468x60) -->
+<!-- FIX: Added setTimeout to hide the fallback message after 1 second. -->
 <!-- ------------------------------------------------------------------ -->
 <div class="ad-slot-top w-full text-center bg-gray-100/50 shadow-md sticky top-0 z-20 overflow-hidden" 
      style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
     
-    <div class="flex items-center justify-center text-xs text-gray-500 p-2 bg-gray-200/50 rounded-md">
-        Top Banner Ad Slot Placeholder (468x60)
+    <!-- START AD CODE -->
+    <script type="text/javascript">
+        atOptions = {
+            'key' : '16a502080d5a846fc5b18c305ec9b6b7',
+            'format' : 'iframe',
+            'height' : 60,
+            'width' : 468,
+            'params' : {}
+        };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
+    
+    <!-- FALLBACK IF AD FAILS TO LOAD (Hidden after 1s to prevent overlap) -->
+    <div id="top-ad-fallback" class="absolute inset-0 flex items-center justify-center text-xs text-gray-500 transition-opacity duration-1000">
+        <span class="p-2 bg-gray-200/50 rounded-md">Top Banner Ad Slot (468x60)</span>
     </div>
+
+    <script>
+        // Hide the fallback message after 1 second to give the real ad time to load and prevent overlap.
+        // The real ad uses an iframe, so this div should be covered or pushed aside eventually.
+        setTimeout(() => {
+            const fallback = document.getElementById('top-ad-fallback');
+            if (fallback) {
+                fallback.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }, 1000); 
+    </script>
+    <!-- END AD CODE -->
 </div>
 <!-- ------------------------------------------------------------------ -->
 
@@ -216,14 +243,27 @@
     </main>
     
     <!-- ------------------------------------------------------------------ -->
-    <!-- BOTTOM AD SLOT: Placeholder (468x60) - Since a dedicated banner script was not provided for the new link. -->
+    <!-- BOTTOM AD SLOT: ADVERTISEMENT CODE HERE (468x60) -->
+    <!-- FIX: Confirmed position at 56px above footer (52px high). Added fallback for visibility. -->
     <!-- ------------------------------------------------------------------ -->
     <div class="ad-slot-bottom w-full text-center bg-gray-900/90 shadow-2xl fixed bottom-[56px] left-0 right-0 z-40 overflow-hidden" 
          style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
-        
+        <!-- START AD CODE -->
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '16a502080d5a846fc5b18c305ec9b6b7',
+                'format' : 'iframe',
+                'height' : 60,
+                'width' : 468,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
+        <!-- FALLBACK MESSAGE: This message will be visible if the ad script fails to load -->
         <div class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white/80">
-            Bottom Fixed Ad Slot Placeholder (60px) - Support Us!
+            Bottom Fixed Ad Slot (60px) - Support Us!
         </div>
+        <!-- END AD CODE -->
     </div>
     <!-- ------------------------------------------------------------------ -->
 
@@ -264,22 +304,6 @@
 
 <script type="text/javascript">
     const { ref, reactive, computed, createApp, nextTick } = Vue;
-
-    // --- Pop-under Script Implementation (New Code) ---
-    const revenueCpmGateUrl = 'https://www.revenuecpmgate.com/a8jgr15uq?key=cda3b75e327d429913fe0decd408f9de';
-    let popUnderTriggered = false;
-
-    // Trigger the pop-under on the first user interaction (click) on the page.
-    // This complies with modern browser autoplay policies.
-    document.addEventListener('click', function(e) {
-        if (!popUnderTriggered) {
-            // Open the pop-under URL in a new window/tab
-            window.open(revenueCpmGateUrl, '_blank'); 
-            popUnderTriggered = true;
-        }
-    }, { once: true }); // Use { once: true } to ensure it only runs on the very first click
-
-    // ------------------------------------------------
 
     createApp({
         setup() {
