@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatusMantra - HD Media Optimizer (HTML/FFmpeg Ready)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Vue.js for reactive UI -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- FFmpeg.WASM Library Import (Placeholder for real execution) -->
+
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #EC4899; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background-color: #f9fafb; }
+        [v-cloak] { display: none; }
+
+        /* CTA Button Styling */
+        .cta-button {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 6px 15px rgba(236, 72, 153, 0.4); 
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(236, 72, 153, 0.7);
+        }
+        
+        /* Gradient Backgrounds */
+        .header-bg {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); 
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        /* Padding bottom needs to clear the fixed bottom ad (60px) and the footer (~52px). */
+        main {
+            padding-bottom: 130px; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800">
+
+<!-- ------------------------------------------------------------------ -->
+<!-- TOP AD SLOT: Placeholder (468x60) - Since a dedicated banner script was not provided for the new link. -->
+<!-- ------------------------------------------------------------------ -->
+<div class="ad-slot-top w-full text-center bg-gray-100/50 shadow-md sticky top-0 z-20 overflow-hidden" 
+     style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
+    
+    <div class="flex items-center justify-center text-xs text-gray-500 p-2 bg-gray-200/50 rounded-md">
+        Top Banner Ad Slot Placeholder (468x60)
+    </div>
+</div>
+<!-- ------------------------------------------------------------------ -->
+
+<div id="app" v-cloak class="min-h-screen flex flex-col items-center">
+
+    <!-- Header -->
+    <header class="w-full header-bg shadow-2xl sticky top-[60px] z-10">
+        <div class="container mx-auto p-4 max-w-4xl flex justify-between items-center text-white">
+            <h1 class="text-3xl font-extrabold tracking-tight">
+                StatusMantra <span class="text-yellow-300 text-sm italic font-medium">WASM Edition</span>
+            </h1>
+            <button @click="isSettingsOpen = true" class="p-2 rounded-full bg-fuchsia-700/50 hover:bg-fuchsia-700 transition duration-150 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.306 2.306a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.306 2.306a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.306-2.306a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.306-2.306a1.724 1.724 0 002.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 w-full max-w-4xl flex-grow">
+
+        <!-- Primary Action Card -->
+        <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-3xl mb-8 border-b-8 border-fuchsia-500 card-shadow">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-4 text-center">
+                Optimize Your Status to <span class="text-fuchsia-600">HD!</span>
+            </h2>
+
+            <!-- File Upload Drop Zone -->
+            <div @dragover.prevent @drop="handleFileDrop"
+                 class="border-4 border-dashed rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition duration-300"
+                 :class="{'bg-fuchsia-100 border-fuchsia-600 shadow-lg': isDragOver, 'border-gray-300 bg-white hover:border-fuchsia-400': !isDragOver}"
+                 @dragenter="isDragOver = true" @dragleave="isDragOver = false"
+                 @click="$refs.fileInput.click()">
+                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="isLoading">
+                
+                <svg class="mx-auto h-16 w-16 text-fuchsia-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                
+                <p class="mt-2 text-xl text-gray-700 font-bold">
+                    <span class="text-fuchsia-600">Upload Your File</span>
+                </p>
+                <p class="text-md text-gray-500 mt-1">or Drag & Drop here</p>
+            </div>
+
+            <!-- Processing Status & Progress -->
+            <div v-if="isLoading || currentProcessStep" class="mt-6 p-4 bg-orange-50 rounded-xl shadow-inner">
+                <div class="flex justify-between items-center mb-2 text-sm font-bold text-orange-700">
+                    <span>{{ loadingMessage }}</span>
+                    <span>{{ progress.toFixed(0) }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out" :style="{ width: progress + '%' }"></div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 text-center italic">
+                    <span v-if="currentProcessStep === 1">1. Writing file to virtual file system...</span>
+                    <span v-else-if="currentProcessStep === 2">2. Executing FFmpeg command for compression...</span>
+                    <span v-else-if="currentProcessStep === 3">3. Reading result and applying watermark...</span>
+                    <span v-else>Server is preparing the worker...</span>
+                </p>
+            </div>
+
+            <!-- Error Message -->
+            <div v-if="error" class="mt-4 p-4 bg-red-100 border border-red-500 text-red-700 rounded-xl shadow-md">
+                <p class="font-bold">Error:</p>
+                <p class="text-sm whitespace-pre-wrap">{{ error }}</p>
+            </div>
+        </section>
+
+        <!-- Result/Preview Section -->
+        <section v-if="compressedFiles.length > 0" class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl mb-8 border-b-8 border-orange-500 card-shadow">
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+                Optimization Complete! 🎉
+            </h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Original File Info -->
+                <div class="p-4 border border-gray-300 rounded-xl bg-gray-50 shadow-md">
+                    <h3 class="text-xl font-bold mb-3 text-gray-700">Original File</h3>
+                    <p class="text-sm text-gray-600 font-semibold mb-2 truncate">Name: {{ originalFile.name }}</p>
+                    <div v-if="originalFile.url" class="aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                        <component :is="originalFile.type.startsWith('video') ? 'video' : 'img'" 
+                                   :src="originalFile.url" controls class="w-full h-full object-contain"></component>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 font-semibold">Size: {{ originalFileSize }}</p>
+                </div>
+
+                <!-- Compressed Files (Segments) -->
+                <div class="p-4 border border-orange-400 rounded-xl bg-orange-50 shadow-md">
+                    <h3 class="text-xl font-bold mb-3 text-orange-700">Optimized Segments (Watermarked Preview)</h3>
+                    
+                    <div class="relative mb-4">
+                        <p class="font-semibold text-sm mb-1 text-center text-gray-600">Watermarked Preview (Segment 1):</p>
+                        <div v-if="compressedFiles[0] && compressedFiles[0].type" class="aspect-video rounded-lg overflow-hidden border border-gray-300">
+                            <!-- Image Canvas Preview -->
+                            <canvas v-if="compressedFiles[0].type.startsWith('image')" 
+                                    :id="`canvas-preview-0`" 
+                                    class="w-full h-full object-contain"></canvas>
+                            
+                            <!-- Video Preview -->
+                            <div v-else-if="compressedFiles[0].type.startsWith('video')" class="relative w-full h-full">
+                                <video :src="compressedFiles[0].url" controls class="w-full h-full object-contain"></video>
+                                <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/30 rounded-full text-white text-xs font-bold pointer-events-none">
+                                    StatusMantra HD
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                        <div v-for="(file, index) in compressedFiles" :key="index"
+                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-white rounded-lg shadow-md border border-orange-200 hover:shadow-lg transition">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold truncate text-gray-800">{{ file.name }}</p>
+                                <p class="text-xs text-gray-500 mt-1 sm:mt-0">Size: {{ formatSize(file.size) }}</p>
+                            </div>
+                            <a :href="file.url" :download="file.name"
+                                class="w-full sm:w-auto mt-2 sm:mt-0 px-4 py-2 bg-fuchsia-500 text-white text-sm font-semibold rounded-full hover:bg-fuchsia-600 transition-colors shadow-lg cta-button">
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                    <p v-if="compressedFiles.length > 1" class="mt-4 text-sm text-gray-600 italic text-center">
+                        Video was split into {{ compressedFiles.length }} status segments.
+                    </p>
+                </div>
+            </div>
+
+            <!-- AI Caption Generator -->
+            <div class="mt-8 p-6 border-4 border-dashed border-violet-500 rounded-2xl bg-violet-50 shadow-xl">
+                <h3 class="text-2xl font-extrabold mb-4 text-violet-700 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v2.101a20.07 20.07 0 003.731 2.373l.514-.14a1 1 0 011.086.586l.1.341a1 1 0 01-.48 1.059l-1.391.73a20.007 20.007 0 00-.001 7.202l1.392.731a1 1 0 01.48 1.059l-.1.341a1 1 0 01-1.086.586l-.514-.14A20.07 20.07 0 0012 17.899V20a1 1 0 01-.7 1.046l-4-1a1 1 0 01-.6-1.046V17.899a20.07 20.07 0 00-3.731-2.373l-.514.14a1 1 0 01-1.086-.586l-.1-.341a1 1 0 01.48-1.059l1.391-.73A20.007 20.007 0 004 8.2l-1.392-.731a1 1 0 01-.48-1.059l.1-.341a1 1 0 011.086-.586l.514.14A20.07 20.07 0 008.7 2.101V2a1 1 0 01.6-1.046l4 1zM7 11V9h2v2H7zm4-2h2v2h-2V9z" clip-rule="evenodd" /></svg>
+                    AI Caption Generator ✨
+                </h3>
+                
+                <button v-if="!isGeneratingCaption && !generatedCaption" 
+                        @click="generateCaption"
+                        :disabled="isLoading"
+                        class="w-full py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-lg cta-button disabled:opacity-50">
+                    Generate Caption/Hashtags
+                </button>
+                
+                <div v-if="isGeneratingCaption" class="text-center py-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-4 border-violet-600 mx-auto"></div>
+                    <p class="mt-3 text-sm font-semibold text-violet-700">AI is searching for trending captions...</p>
+                </div>
+
+                <div v-if="generatedCaption" class="mt-4 p-4 bg-white rounded-xl border border-violet-300 shadow-lg">
+                    <p class="font-extrabold text-xl text-violet-800 mb-3">Generated Content:</p>
+                    <p class="text-gray-800 whitespace-pre-wrap">{{ generatedCaption }}</p>
+                    <button @click="copyToClipboard(generatedCaption)" 
+                            class="mt-4 w-full text-md py-3 bg-violet-500 text-white font-bold rounded-xl hover:bg-violet-600 transition-colors shadow-lg cta-button">
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Processing History Section (Omitted for brevity, assumed functional) -->
+
+    </main>
+    
+    <!-- ------------------------------------------------------------------ -->
+    <!-- BOTTOM AD SLOT: Placeholder (468x60) - Since a dedicated banner script was not provided for the new link. -->
+    <!-- ------------------------------------------------------------------ -->
+    <div class="ad-slot-bottom w-full text-center bg-gray-900/90 shadow-2xl fixed bottom-[56px] left-0 right-0 z-40 overflow-hidden" 
+         style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
+        
+        <div class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white/80">
+            Bottom Fixed Ad Slot Placeholder (60px) - Support Us!
+        </div>
+    </div>
+    <!-- ------------------------------------------------------------------ -->
+
+    <!-- FIXED FOOTER -->
+    <footer class="w-full bg-gray-900 shadow-inner p-4 text-center fixed bottom-0 left-0 right-0 z-50">
+        <p class="text-sm font-medium text-white">
+            &copy; 2024 StatusMantra. All rights reserved.
+        </p>
+    </footer>
+
+
+    <!-- Settings Modal -->
+    <div v-if="isSettingsOpen" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-3xl w-full max-w-md p-6 transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-700">Settings</h3>
+                <button @click="isSettingsOpen = false" class="p-2 rounded-full hover:bg-gray-100">
+                    <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <div class="mb-6 p-4 border border-fuchsia-400 bg-fuchsia-50 rounded-xl">
+                <label class="block text-lg font-semibold text-gray-700 mb-2">Target Platform</label>
+                <select v-model="settings.targetPlatform" class="w-full p-3 border-2 border-fuchsia-300 rounded-lg focus:ring-fuchsia-500 focus:border-fuchsia-500 font-medium">
+                    <option value="whatsapp_status">WhatsApp Status ($\approx 16 \text{ MB}/30 \text{s}$)</option>
+                    <option value="instagram_reel">Instagram Reel/Story (HD/4K)</option>
+                </select>
+                <p class="text-xs text-gray-600 mt-2">The server will adjust the quality based on your selected platform.</p>
+            </div>
+
+            <button @click="isSettingsOpen = false" class="w-full mt-6 py-3 bg-fuchsia-600 text-white font-bold rounded-xl hover:bg-fuchsia-700 transition-colors shadow-lg cta-button">
+                Close
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    const { ref, reactive, computed, createApp, nextTick } = Vue;
+
+    // --- Pop-under Script Implementation (New Code) ---
+    const revenueCpmGateUrl = 'https://www.revenuecpmgate.com/a8jgr15uq?key=cda3b75e327d429913fe0decd408f9de';
+    let popUnderTriggered = false;
+
+    // Trigger the pop-under on the first user interaction (click) on the page.
+    // This complies with modern browser autoplay policies.
+    document.addEventListener('click', function(e) {
+        if (!popUnderTriggered) {
+            // Open the pop-under URL in a new window/tab
+            window.open(revenueCpmGateUrl, '_blank'); 
+            popUnderTriggered = true;
+        }
+    }, { once: true }); // Use { once: true } to ensure it only runs on the very first click
+
+    // ------------------------------------------------
+
+    createApp({
+        setup() {
+            // --- State ---
+            const isLoading = ref(false);
+            const loadingMessage = ref("Waiting for file upload...");
+            const error = ref(null);
+            const progress = ref(0);
+            const isDragOver = ref(false);
+            const currentProcessStep = ref(0); // 0: Idle, 1: Write, 2: Execute, 3: Read
+            
+            const originalFile = reactive({ name: '', type: '', url: '', size: 0, extension: '' });
+            const compressedFiles = ref([]);
+            const isSettingsOpen = ref(false);
+            
+            const settings = reactive({ 
+                targetPlatform: 'whatsapp_status'
+            });
+            
+            const isGeneratingCaption = ref(false);
+            const generatedCaption = ref('');
+            const apiKey = ""; // API key is handled by the environment
+            
+            const APP_PREFIX = "StatusMantra_"; // Application name prefix
+
+            // --- Computed ---
+            const originalFileSize = computed(() => formatSize(originalFile.size));
+
+            // --- Methods ---
+
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            function resetState() {
+                error.value = null;
+                progress.value = 0;
+                currentProcessStep.value = 0;
+                originalFile.name = ''; originalFile.type = ''; originalFile.url = ''; 
+                originalFile.size = 0; originalFile.extension = ''; 
+                compressedFiles.value = [];
+                generatedCaption.value = '';
+            }
+
+            function handleFileDrop(event) {
+                event.preventDefault();
+                isDragOver.value = false;
+                const files = event.dataTransfer.files;
+                if (files.length > 0) processFile(files[0]);
+            }
+
+            function handleFileUpload(event) {
+                const files = event.target.files;
+                if (files.length > 0) processFile(files[0]);
+            }
+
+            function processFile(file) {
+                resetState();
+                
+                originalFile.name = file.name;
+                originalFile.type = file.type;
+                originalFile.size = file.size;
+                const parts = file.name.split('.');
+                originalFile.extension = parts.length > 1 ? '.' + parts.pop() : '';
+
+                originalFile.url = URL.createObjectURL(file);
+
+                // Start the simulated FFmpeg process
+                runFFmpegSimulation(file);
+            }
+            
+            // Function to render the image onto canvas with the default watermark
+            function renderWatermarkedImage(imageUrl, canvasId) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; 
+
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // Default watermark text
+                    const watermarkText = "StatusMantra HD";
+                    
+                    const fontSize = Math.max(16, img.height / 20); 
+                    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                    
+                    // Improved Watermark for visibility
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
+                    ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
+                    ctx.shadowBlur = 6; 
+                    ctx.shadowOffsetX = 3; 
+                    ctx.shadowOffsetY = 3; 
+
+                    const textMetrics = ctx.measureText(watermarkText);
+                    const margin = fontSize / 1.5; 
+                    const x = canvas.width - textMetrics.width - margin;
+                    const y = canvas.height - margin; 
+                    
+                    ctx.fillText(watermarkText, x, y);
+                    
+                    // Reset shadow
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                };
+                img.src = imageUrl;
+            }
+
+            // Function to handle exponential backoff for API calls
+            async function fetchWithRetry(url, options, maxRetries = 5) {
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return await response.json();
+                    } catch (e) {
+                        console.error(`Attempt ${i + 1} failed:`, e);
+                        if (i === maxRetries - 1) throw e;
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+
+            // --- Gemini API Call for Caption Generation ---
+            async function generateCaption() {
+                if (!originalFile.name || isGeneratingCaption.value) return;
+
+                isGeneratingCaption.value = true;
+                generatedCaption.value = '';
+                error.value = null; 
+
+                const isVideo = originalFile.type.startsWith('video');
+                const platform = settings.targetPlatform.includes('whatsapp') ? 'WhatsApp Status' : 'Instagram Reel/Post';
+                const mediaType = isVideo ? 'Video' : 'Photo';
+
+                const systemPrompt = "Act as a creative social media manager specializing in trending content. Provide a catchy, engaging caption and 5 trending, relevant hashtags. Format the output with the caption first, followed by a new line for each hashtag.";
+                const userQuery = `Generate a captivating caption and 5 relevant hashtags for a user's uploaded ${mediaType} optimized for ${platform}. The caption should be engaging and match a trending social media vibe.`;
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                try {
+                    const response = await fetchWithRetry(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || 'Failed to generate caption.';
+                    generatedCaption.value = text;
+                    
+                } catch (e) {
+                    console.error("Gemini API Error:", e);
+                    error.value = 'Caption generation failed. (Gemini API error)';
+                } finally {
+                    isGeneratingCaption.value = false;
+                }
+            }
+            
+            function copyToClipboard(text) {
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = text;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    error.value = '✅ Caption copied!';
+                    setTimeout(() => error.value = null, 2500);
+                } catch (err) {
+                    error.value = 'Copy failed. Please copy manually.';
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            }
+
+            // --- FFmpeg WASM Simulation Logic ---
+            async function runFFmpegSimulation(file) {
+                isLoading.value = true;
+                currentProcessStep.value = 0;
+                error.value = null;
+
+                // 1. Simulate FFmpeg Core Loading
+                loadingMessage.value = "1. Initializing media worker...";
+                progress.value = 10; 
+                await new Promise(resolve => setTimeout(resolve, 500)); 
+
+                // --- START SIMULATED FFmpeg EXECUTION ---
+                
+                // 1. Simulate Writing File to FFmpeg Virtual FS
+                currentProcessStep.value = 1;
+                loadingMessage.value = `2. Writing ${originalFile.name} to virtual FS...`;
+                progress.value = 25;
+                await new Promise(resolve => setTimeout(resolve, 800)); 
+                
+                // 2. Simulate FFmpeg Command Execution
+                currentProcessStep.value = 2;
+                loadingMessage.value = `3. Executing FFmpeg commands: Compression & Splitting...`;
+                
+                // --- FFmpeg Command Simulation ---
+                
+                let interval = setInterval(() => {
+                    if (progress.value < 80) progress.value += 5;
+                }, 300);
+
+                await new Promise(resolve => setTimeout(resolve, 3000)); // Simulating processing time
+
+                clearInterval(interval);
+                progress.value = 85;
+
+                // 3. Simulate Reading Result from FFmpeg Virtual FS
+                currentProcessStep.value = 3;
+                loadingMessage.value = "4. Reading results and applying client-side watermark...";
+                await new Promise(resolve => setTimeout(resolve, 800)); 
+                
+                try {
+                    // --- Compression Logic (Hardcoded for Simulation) ---
+                    const isVideo = originalFile.type.startsWith('video');
+                    const isWhatsApp = settings.targetPlatform === 'whatsapp_status';
+                    const numSegments = isVideo && isWhatsApp ? 2 : 1;
+                    
+                    // Photo: 10% of original size; Video: 20% of original size
+                    const mockCompressedFactor = isVideo ? 0.2 : 0.1;
+                    const mockCompressedSize = Math.max(1024 * 50, originalFile.size * mockCompressedFactor); // Min 50KB
+                    const mockSegmentSize = mockCompressedSize / numSegments;
+                    
+                    const baseName = originalFile.name.replace(originalFile.extension, '');
+                    
+                    const simulatedSegments = Array.from({ length: numSegments }).map((_, i) => ({
+                        // APP_PREFIX + platform + segment_number + original_filename_base + extension
+                        name: `${APP_PREFIX}${settings.targetPlatform}_segment_${i + 1}_${baseName}${originalFile.extension}`,
+                        
+                        // Since this is a simulation, we reuse the original URL for preview purposes
+                        url: originalFile.url, 
+                        size: mockSegmentSize,
+                        type: originalFile.type, 
+                    }));
+                    
+                    compressedFiles.value = simulatedSegments;
+
+                    await nextTick();
+                    if (compressedFiles.value.length > 0 && compressedFiles.value[0].type.startsWith('image')) {
+                         // Rerender the canvas after the new file is loaded
+                        renderWatermarkedImage(originalFile.url, `canvas-preview-0`);
+                    }
+
+                    loadingMessage.value = "Processing Complete!";
+                    progress.value = 100;
+
+                } catch (e) {
+                    console.error("FFmpeg Simulation Error:", e);
+                    error.value = `FFmpeg Execution Error (Simulated): ${e.message}. (Note: In a live app, ensure FFmpeg WASM worker path is correct.)`;
+                } finally {
+                    isLoading.value = false;
+                    currentProcessStep.value = 0;
+                }
+            }
+
+            return {
+                // State & Settings
+                isLoading, loadingMessage, error, progress, isDragOver, currentProcessStep,
+                originalFile, originalFileSize, compressedFiles,
+                isSettingsOpen, settings,
+                
+                // Gemini State
+                isGeneratingCaption, generatedCaption,
+
+                // Methods
+                handleFileDrop, handleFileUpload,
+                formatSize,
+                generateCaption, copyToClipboard,
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
