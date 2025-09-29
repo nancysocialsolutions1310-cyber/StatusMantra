@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatusMantra - HD Media Optimizer (Ad-Free on Click)</title>
+    <title>StatusMantra - HD Media Optimizer (Mock Processing)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Vue.js for reactive UI -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Load FFmpeg WASM library for real media processing -->
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/ffmpeg.min.js"></script>
     
     <style>
         /* Custom Scrollbar */
@@ -90,7 +88,7 @@
     <header class="w-full header-bg shadow-2xl sticky top-[60px] z-10">
         <div class="container mx-auto p-4 max-w-4xl flex justify-between items-center text-white">
             <h1 class="text-3xl font-extrabold tracking-tight">
-                StatusMantra <span class="text-yellow-300 text-sm italic font-medium">WASM Edition</span>
+                StatusMantra <span class="text-yellow-300 text-sm italic font-medium">API Edition (Backend Required)</span>
             </h1>
             <button @click="isSettingsOpen = true" class="p-2 rounded-full bg-fuchsia-700/50 hover:bg-fuchsia-700 transition duration-150 shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.306 2.306a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.306 2.306a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.306-2.306a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.306-2.306a1.724 1.724 0 002.572-1.065z" />
@@ -108,14 +106,19 @@
                 Optimize Your Status to <span class="text-fuchsia-600">HD!</span>
             </h2>
 
+            <div v-if="hasBackendError" class="mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-xl shadow-md">
+                <p class="font-bold">Important Note:</p>
+                <p class="text-sm">This is running in **Mock API Mode**. File uploads will simulate optimization but **will not** perform real compression without a running server-side FFmpeg endpoint.</p>
+            </div>
+
             <!-- File Upload Drop Zone -->
             <div @dragover.prevent @drop="handleFileDrop"
                  class="border-4 border-dashed rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition duration-300"
                  :class="{'bg-fuchsia-100 border-fuchsia-600 shadow-lg': isDragOver, 'border-gray-300 bg-white hover:border-fuchsia-400': !isDragOver}"
                  @dragenter="isDragOver = true" @dragleave="isDragOver = false"
                  @click="$refs.fileInput.click()"
-                 :disabled="!isFfmpegLoaded || isLoading">
-                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="!isFfmpegLoaded || isLoading">
+                 :disabled="isLoading">
+                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="isLoading">
                 
                 <svg class="mx-auto h-16 w-16 text-fuchsia-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -128,7 +131,7 @@
             </div>
 
             <!-- Processing Status & Progress -->
-            <div v-if="isLoading || currentProcessStep > 0" class="mt-6 p-4 bg-orange-50 rounded-xl shadow-inner">
+            <div v-if="isLoading" class="mt-6 p-4 bg-orange-50 rounded-xl shadow-inner">
                 <div class="flex justify-between items-center mb-2 text-sm font-bold text-orange-700">
                     <span>{{ loadingMessage }}</span>
                     <span>{{ progress.toFixed(0) }}%</span>
@@ -137,21 +140,13 @@
                     <div class="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out" :style="{ width: progress + '%' }"></div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 text-center italic">
-                    <span v-if="currentProcessStep === 1">1. Writing file to virtual file system...</span>
-                    <span v-else-if="currentProcessStep === 2">2. Executing FFmpeg command for compression...</span>
-                    <span v-else-if="currentProcessStep === 3">3. Reading result and applying watermark...</span>
+                    <span v-if="currentProcessStep === 1">1. Uploading file to backend...</span>
+                    <span v-else-if="currentProcessStep === 2">2. Server is executing FFmpeg compression...</span>
+                    <span v-else-if="currentProcessStep === 3">3. Downloading result segments...</span>
                     <span v-else>Processing complete...</span>
                 </p>
             </div>
             
-            <!-- Initialization Status (Step 0) -->
-            <div v-else-if="currentProcessStep === -1 || currentProcessStep === 0" class="mt-6 p-4 bg-violet-50 rounded-xl shadow-inner">
-                <p class="text-sm font-bold text-violet-700 text-center">{{ loadingMessage }}</p>
-                <div v-if="currentProcessStep === -1" class="w-full bg-gray-200 rounded-full h-3 mt-2 animate-pulse">
-                    <div class="bg-violet-500 h-3 rounded-full w-1/2"></div>
-                </div>
-            </div>
-
             <!-- Error Message -->
             <div v-if="error" class="mt-4 p-4 bg-red-100 border border-red-500 text-red-700 rounded-xl shadow-md">
                 <p class="font-bold">Error:</p>
@@ -179,22 +174,17 @@
 
                 <!-- Compressed Files (Segments) -->
                 <div class="p-4 border border-orange-400 rounded-xl bg-orange-50 shadow-md">
-                    <h3 class="text-xl font-bold mb-3 text-orange-700">Optimized Segments (Watermarked Preview)</h3>
+                    <h3 class="text-xl font-bold mb-3 text-orange-700">Optimized Segments (Mock Preview)</h3>
                     
                     <div class="relative mb-4">
-                        <p class="font-semibold text-sm mb-1 text-center text-gray-600">Watermarked Preview (Segment 1):</p>
+                        <p class="font-semibold text-sm mb-1 text-center text-gray-600">Mock Output (Segment 1):</p>
                         <div v-if="compressedFiles[0] && compressedFiles[0].type" class="aspect-video rounded-lg overflow-hidden border border-gray-300">
-                            <!-- Image Canvas Preview -->
-                            <canvas v-if="compressedFiles[0].type.startsWith('image')" 
-                                    :id="`canvas-preview-0`" 
-                                    class="w-full h-full object-contain"></canvas>
+                            <!-- Show original video/image as mock output -->
+                            <component :is="compressedFiles[0].type.startsWith('video') ? 'video' : 'img'" 
+                                   :src="originalFile.url" controls class="w-full h-full object-contain"></component>
                             
-                            <!-- Video Preview -->
-                            <div v-else-if="compressedFiles[0].type.startsWith('video')" class="relative w-full h-full">
-                                <video :src="compressedFiles[0].url" controls class="w-full h-full object-contain"></video>
-                                <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/30 rounded-full text-white text-xs font-bold pointer-events-none">
-                                    StatusMantra HD
-                                </div>
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-lg font-bold">
+                                MOCK COMPRESSED FILE
                             </div>
                         </div>
                     </div>
@@ -208,12 +198,12 @@
                             </div>
                             <a :href="file.url" :download="file.name"
                                 class="w-full sm:w-auto mt-2 sm:mt-0 px-4 py-2 bg-fuchsia-500 text-white text-sm font-semibold rounded-full hover:bg-fuchsia-600 transition-colors shadow-lg cta-button">
-                                Download
+                                Download (Mock)
                             </a>
                         </div>
                     </div>
                     <p v-if="compressedFiles.length > 1" class="mt-4 text-sm text-gray-600 italic text-center">
-                        Video was split into {{ compressedFiles.length }} status segments.
+                        Video was split into {{ compressedFiles.length }} status segments (Mock).
                     </p>
                 </div>
             </div>
@@ -248,7 +238,16 @@
             </div>
         </section>
         
-        <!-- Processing History Section (Omitted for brevity, assumed functional) -->
+        <!-- Mock Processing History Section -->
+         <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-b-8 border-gray-200 card-shadow">
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+                Processing History
+            </h2>
+            <div class="flex flex-col items-center justify-center h-24 text-gray-500 italic">
+                <svg class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                No processed items yet. Start optimizing!
+            </div>
+        </section>
 
     </main>
 
@@ -299,10 +298,10 @@
             <div class="mb-6 p-4 border border-fuchsia-400 bg-fuchsia-50 rounded-xl">
                 <label class="block text-lg font-semibold text-gray-700 mb-2">Target Platform</label>
                 <select v-model="settings.targetPlatform" class="w-full p-3 border-2 border-fuchsia-300 rounded-lg focus:ring-fuchsia-500 focus:border-fuchsia-500 font-medium">
-                    <option value="whatsapp_status">WhatsApp Status ($\approx 16 \text{ MB}/30 \text{s}$, Max $600 \text{ Kbps}$)</option>
-                    <option value="instagram_reel">Instagram Reel/Story (HD/4K, Max $5 \text{ Mbps}$)</option>
+                    <option value="whatsapp_status">WhatsApp Status (Max $600 \text{ Kbps}$)</option>
+                    <option value="instagram_reel">Instagram Reel/Story (HD/4K)</option>
                 </select>
-                <p class="text-xs text-gray-600 mt-2">The server will adjust the quality based on your selected platform.</p>
+                <p class="text-xs text-gray-600 mt-2">The platform setting is currently **Mocked** and would typically inform the backend processing logic.</p>
             </div>
 
             <button @click="isSettingsOpen = false" class="w-full mt-6 py-3 bg-fuchsia-600 text-white font-bold rounded-xl hover:bg-fuchsia-700 transition-colors shadow-lg cta-button">
@@ -318,18 +317,16 @@
 
     createApp({
         setup() {
-            // Define FFmpeg utility functions here, accessing them from the global window object.
-            const { createFFmpeg, fetchFile } = window.FFmpeg || {};
-
             // --- State ---
             const isLoading = ref(false);
             const loadingMessage = ref("Waiting for file upload...");
             const error = ref(null);
             const progress = ref(0);
             const isDragOver = ref(false);
-            const currentProcessStep = ref(-1); // -1: Init FFmpeg, 0: Idle, 1: Write, 2: Execute, 3: Read
-            
-            const originalFile = reactive({ name: '', type: '', url: '', size: 0, extension: '' });
+            const currentProcessStep = ref(0); // 0: Idle, 1: Upload, 2: Execute, 3: Download
+            const hasBackendError = ref(true); // Flag to show the mock warning
+
+            const originalFile = reactive({ name: '', type: '', url: '', size: 0, file: null, extension: '' });
             const compressedFiles = ref([]);
             const isSettingsOpen = ref(false);
             
@@ -342,8 +339,6 @@
             const apiKey = ""; // API key is handled by the environment
             
             const APP_PREFIX = "StatusMantra_"; 
-            let ffmpeg = null; // FFmpeg instance
-            const isFfmpegLoaded = ref(false);
 
             // --- Computed ---
             const originalFileSize = computed(() => formatSize(originalFile.size));
@@ -362,12 +357,14 @@
                 error.value = null;
                 progress.value = 0;
                 currentProcessStep.value = 0;
-                originalFile.name = ''; originalFile.type = ''; originalFile.url = ''; 
-                originalFile.size = 0; originalFile.extension = ''; 
+                // Revoke old URLs to free memory
+                compressedFiles.value.forEach(f => URL.revokeObjectURL(f.url));
+                originalFile.url = '';
+                
+                originalFile.name = ''; originalFile.type = ''; 
+                originalFile.size = 0; originalFile.extension = ''; originalFile.file = null;
                 compressedFiles.value = [];
                 generatedCaption.value = '';
-                // Clean up previous URLs
-                compressedFiles.value.forEach(f => URL.revokeObjectURL(f.url));
             }
 
             function handleFileDrop(event) {
@@ -383,188 +380,90 @@
             }
 
             function processFile(file) {
-                if (!isFfmpegLoaded.value) {
-                    error.value = "FFmpeg Core is still loading. Please wait a moment and try again.";
-                    return;
-                }
-
                 resetState();
                 
                 originalFile.name = file.name;
                 originalFile.type = file.type;
                 originalFile.size = file.size;
+                originalFile.file = file; // Store the actual file object
                 const parts = file.name.split('.');
                 originalFile.extension = parts.length > 1 ? '.' + parts.pop() : '';
 
                 originalFile.url = URL.createObjectURL(file);
 
-                runFFmpeg(file);
+                runMockFFmpeg();
             }
             
-            // --- FFmpeg WASM Core Initialization (Improved with Retry) ---
-            async function loadFFmpeg() {
-                // Ensure this only runs once
-                if (ffmpeg) {
-                    isFfmpegLoaded.value = true;
-                    return;
-                }
-
-                // Wait for the external script to load (up to 5 seconds)
-                let attempts = 0;
-                while (typeof window.FFmpeg === 'undefined' && attempts < 10) {
-                    attempts++;
-                    loadingMessage.value = `Attempt ${attempts}/10: Waiting for FFmpeg library...`;
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-
-                if (typeof window.FFmpeg === 'undefined') {
-                    error.value = "FFmpeg library file could not be loaded from CDN. Check your internet connection.";
-                    currentProcessStep.value = 0;
-                    isLoading.value = false;
-                    return;
-                }
-                
-                const { createFFmpeg } = window.FFmpeg; // Destructure again after ensuring it's available
-
-                isLoading.value = true;
-                currentProcessStep.value = -1;
-                loadingMessage.value = "Initializing FFmpeg WASM Core (This may take up to 20 seconds)...";
-
-                try {
-                    ffmpeg = createFFmpeg({ 
-                        log: true,
-                        // Core and worker path must be set for external CDN loading
-                        corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.7/dist/ffmpeg-core.js',
-                    });
-
-                    // Add progress logging
-                    ffmpeg.on('progress', ({ ratio }) => {
-                        // Ratio is between 0 and 1. We scale this from 15% to 85% for execution.
-                        if (ratio > 0) {
-                            progress.value = 15 + (ratio * 70); 
-                        }
-                    });
-
-                    // Load with a maximum of 3 retries for stability
-                    let loadAttempts = 0;
-                    while (!isFfmpegLoaded.value && loadAttempts < 3) {
-                        loadAttempts++;
-                        try {
-                            loadingMessage.value = `Initializing FFmpeg Core... Attempt ${loadAttempts}/3`;
-                            await ffmpeg.load();
-                            isFfmpegLoaded.value = true;
-                        } catch (e) {
-                            console.warn(`FFmpeg Load attempt ${loadAttempts} failed. Retrying...`, e);
-                            if (loadAttempts === 3) throw e;
-                            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3s before retry
-                        }
-                    }
-
-                    loadingMessage.value = '✅ FFmpeg Core Loaded! Upload your file to start.';
-                    
-                } catch (e) {
-                    console.error("FFmpeg Load Error:", e);
-                    error.value = `FFmpeg failed to load after multiple attempts. Please ensure your browser supports WASM. Error: ${e.message}`;
-                } finally {
-                    isLoading.value = false;
-                    currentProcessStep.value = 0; // Ready for upload
-                }
-            }
-
-            // --- FFmpeg Execution Logic (Real Compression) ---
-            async function runFFmpeg(file) {
-                if (!ffmpeg) {
-                    error.value = "FFmpeg is not initialized. Please refresh.";
-                    return;
-                }
-                
+            // --- MOCK API/FFmpeg Execution Logic (Simulates Server Processing) ---
+            async function runMockFFmpeg() {
                 isLoading.value = true;
                 error.value = null;
                 progress.value = 0;
-                const INPUT_FILE = 'input' + originalFile.extension;
-                const OUTPUT_BASE = 'output_';
+                
+                // Simulate segment count based on file size (30s rule for WhatsApp)
+                const isVideo = originalFile.type.startsWith('video');
+                const isWhatsApp = settings.targetPlatform === 'whatsapp_status';
+                
+                // Mock: If it's a video and target is WhatsApp, split into 2-3 segments. Otherwise, 1.
+                const mockSegmentCount = isVideo && isWhatsApp ? Math.floor(Math.random() * 3) + 1 : 1;
                 
                 try {
-                    // 1. Write File to Virtual FS
+                    // 1. Simulate Upload
                     currentProcessStep.value = 1;
-                    loadingMessage.value = `1. Writing ${originalFile.name} to virtual FS...`;
-                    await ffmpeg.FS('writeFile', INPUT_FILE, await fetchFile(file));
-                    progress.value = 15;
+                    loadingMessage.value = `1. Uploading ${originalFile.name} to server...`;
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s upload time
+                    progress.value = 30;
 
-                    // Determine target bitrate and segment count
-                    const isWhatsApp = settings.targetPlatform === 'whatsapp_status';
-                    const targetBitrate = isWhatsApp ? '600k' : '5M'; // 600 Kbps for WhatsApp, 5 Mbps for Insta HD
-                    const segmentDuration = isWhatsApp ? '30' : '300'; // 30s segments for WA, longer/single segment for others.
-                    
-                    const outputName = isWhatsApp ? `${OUTPUT_BASE}%03d.mp4` : `${OUTPUT_BASE}final.mp4`;
-
-                    // 2. Execute FFmpeg Command
+                    // 2. Simulate Server FFmpeg Execution
                     currentProcessStep.value = 2;
-                    loadingMessage.value = `2. Optimizing media for ${settings.targetPlatform} (Bitrate: ${targetBitrate})...`;
-
-                    const args = [
-                        '-i', INPUT_FILE,
-                        '-vf', 'scale=1080:-2', // Standardize resolution (max 1080p height/width)
-                        '-c:v', 'libx264',
-                        '-crf', '28', // Increased compression/quality tradeoff
-                        '-preset', 'veryfast',
-                        '-b:v', targetBitrate, 
-                        '-c:a', 'aac',
-                        '-b:a', '128k',
-                    ];
-
-                    if (isWhatsApp) {
-                        // Add segmentation logic for WhatsApp
-                        args.push(
-                            '-f', 'segment', 
-                            '-segment_time', segmentDuration, 
-                            outputName
-                        );
-                    } else {
-                        args.push(outputName);
-                    }
-
-                    await ffmpeg.run(...args);
-                    progress.value = 95;
-
-                    // 3. Read Results
-                    currentProcessStep.value = 3;
-                    loadingMessage.value = "3. Reading compressed files and creating download links...";
+                    loadingMessage.value = `2. Server is executing FFmpeg compression for ${settings.targetPlatform}... (Estimated ${3 + mockSegmentCount}s)`;
                     
-                    const outputFiles = ffmpeg.FS('readdir', '/').filter(name => name.startsWith(OUTPUT_BASE));
-
-                    if (outputFiles.length === 0) {
-                        throw new Error("FFmpeg output files not found.");
+                    // The actual implementation here would be: 
+                    // const result = await fetch('YOUR_BACKEND_FFMPEG_ENDPOINT', { method: 'POST', body: originalFile.file });
+                    
+                    // Mock progress updates
+                    for(let i = 0; i < 7; i++) {
+                        await new Promise(resolve => setTimeout(resolve, 500)); 
+                        progress.value = 30 + (i * 10);
                     }
+                    
+                    // Simulate processing time based on segment count
+                    await new Promise(resolve => setTimeout(resolve, 1000 * mockSegmentCount)); 
+                    
+                    progress.value = 90;
 
-                    const newCompressedFiles = outputFiles.map((name, index) => {
-                        const data = ffmpeg.FS('readFile', name);
-                        const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                    // 3. Simulate Downloading Results
+                    currentProcessStep.value = 3;
+                    loadingMessage.value = "3. Downloading compressed files...";
+                    
+                    const newCompressedFiles = [];
+                    for(let i = 0; i < mockSegmentCount; i++) {
+                        // In a real app, you would download a new blob from the server.
+                        // Here, we just use the original file URL for the mock download link, 
+                        // and assign a *smaller* mock size.
+                        const mockSize = isVideo ? (originalFile.size / mockSegmentCount) * 0.4 : originalFile.size * 0.6;
                         
-                        // Clean file name
-                        const finalName = `${APP_PREFIX}${settings.targetPlatform}_segment_${index + 1}_${originalFile.name.replace(originalFile.extension, '')}.mp4`;
+                        const finalName = `${APP_PREFIX}${settings.targetPlatform}_segment_${i + 1}_${originalFile.name.replace(originalFile.extension, '')}.mp4`;
                         
-                        return {
+                        newCompressedFiles.push({
                             name: finalName,
-                            url: URL.createObjectURL(blob),
-                            size: data.length,
-                            type: 'video/mp4',
-                        };
-                    });
+                            // Use original file URL as mock output URL
+                            url: originalFile.url, 
+                            size: mockSize,
+                            type: originalFile.type,
+                        });
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
                     
                     compressedFiles.value = newCompressedFiles;
 
-                    // Clean up files in the virtual file system
-                    ffmpeg.FS('unlink', INPUT_FILE);
-                    outputFiles.forEach(name => ffmpeg.FS('unlink', name));
-                    
                     await nextTick();
                     loadingMessage.value = "Optimization Complete! Download available.";
                     progress.value = 100;
 
                 } catch (e) {
-                    console.error("FFmpeg Execution Error:", e);
-                    error.value = `Media processing failed. Please check the file type or try different settings. Error: ${e.message}`;
+                    console.error("Mock Execution Error:", e);
+                    error.value = `Media processing simulation failed. Error: ${e.message}`;
                 } finally {
                     isLoading.value = false;
                     currentProcessStep.value = 4; // Done
@@ -572,7 +471,7 @@
             }
 
 
-            // --- Other Utility Functions (Implemented) ---
+            // --- Other Utility Functions (Gemini API for Caption) ---
             
             // Utility function for robust fetching with exponential backoff
             async function fetchWithRetry(url, options, maxRetries = 5) {
@@ -597,7 +496,9 @@
                 generatedCaption.value = '';
                 error.value = null;
 
-                const userQuery = `Generate a trending, engaging caption and 3-5 relevant Hindi and English hashtags for a short video or image intended for social media status. Focus on modern, relatable content.`;
+                const fileInfo = originalFile.name ? ` based on the uploaded file named "${originalFile.name}" (${originalFileSize.value}).` : ".";
+                
+                const userQuery = `Generate a trending, engaging caption and 3-5 relevant Hindi and English hashtags for a short video or image intended for social media status${fileInfo} Focus on modern, relatable content.`;
                 
                 const systemPrompt = "You are a creative social media manager specializing in viral status updates for platforms like WhatsApp and Instagram. Provide a single, concise block of text containing the caption followed by relevant hashtags.";
 
@@ -650,22 +551,10 @@
                 document.body.removeChild(textarea);
             }
             
-            // Placeholder for image processing (currently only videos are truly processed by FFmpeg)
-            function renderWatermarkedImage(imageUrl, canvasId) { 
-                // This logic is complex and usually requires server-side processing or dedicated JS libraries.
-                // For now, we rely on the video/FFmpeg path for media processing.
-                console.log("Image processing simulation skipped.");
-            }
-
-
-            // Load FFmpeg core on initial load
-            loadFFmpeg();
-
-
             return {
                 // State & Settings
-                isLoading, loadingMessage, error, progress, isDragOver, currentProcessStep,
-                originalFile, originalFileSize, compressedFiles, isFfmpegLoaded,
+                isLoading, loadingMessage, error, progress, isDragOver, currentProcessStep, hasBackendError,
+                originalFile, originalFileSize, compressedFiles,
                 isSettingsOpen, settings,
                 
                 // Gemini State
