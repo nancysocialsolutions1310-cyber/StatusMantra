@@ -175,7 +175,7 @@
                         <div v-if="compressedFiles[0] && compressedFiles[0].type" class="aspect-video rounded-lg overflow-hidden border border-gray-300">
                             <!-- Show original video/image as mock output -->
                             <component :is="compressedFiles[0].type.startsWith('video') ? 'video' : 'img'" 
-                                   :src="originalFile.url" controls class="w-full h-full object-contain"></component>
+                                       :src="originalFile.url" controls class="w-full h-full object-contain"></component>
                             
                             <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-lg font-bold">
                                 MOCK COMPRESSED FILE
@@ -233,7 +233,7 @@
         </section>
         
         <!-- Mock Processing History Section -->
-         <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-b-8 border-gray-200 card-shadow">
+          <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-b-8 border-gray-200 card-shadow">
             <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
                 Processing History
             </h2>
@@ -290,6 +290,7 @@
             <div class="mb-6 p-4 border border-fuchsia-400 bg-fuchsia-50 rounded-xl">
                 <label class="block text-lg font-semibold text-gray-700 mb-2">Target Platform</label>
                 <select v-model="settings.targetPlatform" class="w-full p-3 border-2 border-fuchsia-300 rounded-lg focus:ring-fuchsia-500 focus:border-fuchsia-500 font-medium">
+                    <!-- LaTeX formatting applied for the scientific notation (bitrate) -->
                     <option value="whatsapp_status">WhatsApp Status (Max $600 \text{ Kbps}$)</option>
                     <option value="instagram_reel">Instagram Reel/Story (HD/4K)</option>
                 </select>
@@ -306,6 +307,23 @@
 
 <script type="text/javascript">
     const { ref, reactive, computed, createApp, nextTick } = Vue;
+
+    // Utility function for robust fetching with exponential backoff (defined globally for clarity)
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (i === maxRetries - 1) throw error;
+                const delay = Math.pow(2, i) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
 
     createApp({
         setup() {
@@ -464,23 +482,6 @@
 
             // --- Other Utility Functions (Gemini API for Caption) ---
             
-            // Utility function for robust fetching with exponential backoff
-            async function fetchWithRetry(url, options, maxRetries = 5) {
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        const response = await fetch(url, options);
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response;
-                    } catch (error) {
-                        if (i === maxRetries - 1) throw error;
-                        const delay = Math.pow(2, i) * 1000;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                }
-            }
-
             // AI Caption Generator implementation using Gemini API (with Google Search grounding)
             async function generateCaption() {
                 isGeneratingCaption.value = true;
@@ -534,7 +535,8 @@
                     // Use document.execCommand('copy') for better compatibility in iFrames
                     document.execCommand('copy');
                     error.value = "Caption copied to clipboard! ✅";
-                    setTimeout(() => error.value = null, 3000);
+                    // Clear the temporary success message after 3 seconds
+                    setTimeout(() => error.value = null, 3000); 
                 } catch (err) {
                     console.error('Could not copy text: ', err);
                     error.value = 'Failed to copy text. Please copy manually.';
