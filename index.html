@@ -3,563 +3,616 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatusMantra - HD Media Optimizer</title>
-    <!-- Tailwind CSS -->
+    <title>StatusMantra AI - Ultra HD Optimizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Vue.js for reactive UI -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for video/camera -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #EC4899; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background-color: #f9fafb; }
-        [v-cloak] { display: none; }
-
-        /* CTA Button Styling */
-        .cta-button {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 6px 15px rgba(236, 72, 153, 0.4); 
+        :root {
+            --color-primary: #06b6d4; /* Teal/Cyan */
+            --color-secondary: #db2777; /* Magenta/Pink */
+            --color-bg-dark: #1f2937; /* Dark Gray */
+            --color-text-light: #f3f4f6; /* Off White */
         }
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(236, 72, 153, 0.7);
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .app-header {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+        }
+        .card {
+            background-color: #2e3b4a; /* Slightly lighter than background for depth */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .drop-zone {
+            border: 2px dashed var(--color-primary);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(6, 182, 212, 0.1);
+            border-color: var(--color-secondary);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.5);
+        }
+        .error-message {
+            background-color: #451b2f; /* Darkened error background */
+            color: #fca5a5; /* Light red text */
+            border: 1px solid #dc2626;
+        }
+        .info-message {
+            background-color: #1e3a8a; /* Dark blue info */
+            color: #93c5fd; /* Light blue text */
+            border: 1px solid #3b82f6;
+        }
+        .processing-bar {
+            background-color: #4b5563;
+            border-radius: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            border-radius: 0.5rem;
+            transition: width 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        .footer-bar {
+            background-color: #111827;
+            color: #6b7280;
+        }
+        .ai-result-card {
+            background-color: #111827;
+            border: 1px solid var(--color-primary);
+        }
+        .input-dark {
+            background-color: #111827;
+            color: var(--color-text-light);
+            border: 1px solid #4b5563;
         }
         
-        /* Gradient Backgrounds */
-        .header-bg {
-            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); 
-        }
-        .card-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        /* Fixed ad height */
-        .ad-slot-fixed {
-            height: 60px;
-        }
-        /* Ensure the ad container centers the content */
-        .ad-slot-container {
+        /* Custom Ad Container for better centering and responsiveness */
+        .ad-container {
+            margin: 2rem auto;
+            max-width: 468px; /* Max width matching the ad unit size */
+            height: 60px; /* Max height matching the ad unit size */
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%;
-        }
-        /* Main content padding must clear both the top sticky ad and fixed header (approx 100px) 
-           and the bottom fixed ad (60px) plus the footer (40px) */
-        main {
-            padding-top: 10px; 
-            padding-bottom: 120px; 
-        }
-
-        /* Footer height */
-        .fixed-footer-height {
-            height: 40px; 
+            text-align: center;
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-800">
-
-<!-- ------------------------------------------------------------------ -->
-<!-- TOP AD SLOT: Fixed 468x60 Banner (Sticky) - AdZilla Integration -->
-<!-- ------------------------------------------------------------------ -->
-<div class="ad-slot-top w-full text-center shadow-md sticky top-0 z-20 overflow-hidden ad-slot-fixed bg-white border-b border-gray-200">
-    <div class="ad-slot-container">
-        <!-- Ad Code Placeholder: This script is for banner ads only -->
-        <script type="text/javascript">
-            atOptions = {
-                'key' : '16a502080d5a846fc5b18c305ec9b6b7',
-                'format' : 'iframe',
-                'height' : 60,
-                'width' : 468,
-                'params' : {}
-            };
-        </script>
-        <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
-        <!-- End Ad Code Placeholder -->
-    </div>
-</div>
-<!-- ------------------------------------------------------------------ -->
-
-<div id="app" v-cloak class="min-h-screen flex flex-col items-center">
+<body class="flex flex-col items-center">
 
     <!-- Header -->
-    <header class="w-full header-bg shadow-2xl sticky top-[60px] z-10">
-        <div class="container mx-auto p-4 max-w-4xl flex justify-between items-center text-white">
-            <h1 class="text-3xl font-extrabold tracking-tight">
-                StatusMantra <span class="text-yellow-300 text-sm italic font-medium">HD Media Optimizer</span>
-            </h1>
-            <button @click="isSettingsOpen = true" class="p-2 rounded-full bg-fuchsia-700/50 hover:bg-fuchsia-700 transition duration-150 shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.306 2.306a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.306 2.306a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.306-2.306a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.306-2.306a1.724 1.724 0 002.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        </button>
+    <header class="app-header w-full shadow-2xl">
+        <div class="max-w-4xl mx-auto p-4 flex justify-between items-center">
+            <h1 class="text-3xl font-black tracking-widest">STATUS<span class="text-gray-200 font-light">MANTRA</span></h1>
+            <span class="text-sm font-light opacity-80">AI Optimized Media</span>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 md:p-8 w-full max-w-4xl flex-grow">
+    <!-- Main Content -->
+    <main class="w-full max-w-4xl p-4 flex-grow">
+        <div id="app-container" class="card p-6 md:p-10 my-8 w-full space-y-8">
 
-        <!-- Primary Action Card -->
-        <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-3xl mb-8 border-b-8 border-fuchsia-500 card-shadow">
-            <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-4 text-center">
-                Optimize Your Status to <span class="text-fuchsia-600">HD!</span>
+            <h2 class="text-4xl font-extrabold text-center tracking-tighter">
+                One-Click <span class="app-header bg-clip-text text-transparent">AI Media Optimization</span>
             </h2>
 
-            <!-- File Upload Drop Zone -->
-            <div @dragover.prevent @drop="handleFileDrop"
-                 class="border-4 border-dashed rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition duration-300"
-                 :class="{'bg-fuchsia-100 border-fuchsia-600 shadow-lg': isDragOver, 'border-gray-300 bg-white hover:border-fuchsia-400': !isDragOver}"
-                 @dragenter="isDragOver = true" @dragleave="isDragOver = false"
-                 @click="$refs.fileInput.click()"
-                 :disabled="isLoading">
-                <input type="file" ref="fileInput" @change="handleFileUpload" accept="video/*,image/*" class="hidden" :disabled="isLoading">
-                
-                <svg class="mx-auto h-16 w-16 text-fuchsia-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                
-                <p class="mt-2 text-xl text-gray-700 font-bold">
-                    <span class="text-fuchsia-600">Upload Your File</span>
-                </p>
-                <p class="text-md text-gray-500 mt-1">or Drag & Drop here</p>
+            <!-- Status Messages -->
+            <div id="status-message-container" class="mb-6">
+                <!-- Status Messages / Error messages will appear here -->
             </div>
 
-            <!-- Processing Status & Progress -->
-            <div v-if="isLoading" class="mt-6 p-4 bg-orange-50 rounded-xl shadow-inner">
-                <div class="flex justify-between items-center mb-2 text-sm font-bold text-orange-700">
-                    <span>{{ loadingMessage }}</span>
-                    <span>{{ progress.toFixed(0) }}%</span>
+            <!-- ******************************************************************* -->
+            <!-- 1. ADVERTISEMENT SLOT - HEADER BANNER -->
+            <!-- Your provided ad code integrated here. -->
+            <div class="ad-container overflow-hidden">
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : '16a502080d5a846fc5b18c305ec9b6b7',
+                        'format' : 'iframe',
+                        'height' : 60,
+                        'width' : 468,
+                        'params' : {}
+                    };
+                </script>
+                <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
+            </div>
+            <!-- ******************************************************************* -->
+
+            <!-- UPLOAD SECTION -->
+            <div id="upload-section">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">Upload File</h3>
+                <div id="drop-zone" class="drop-zone p-8 text-center cursor-pointer transition-all">
+                    <i data-lucide="video" class="w-12 h-12 text-teal-400 mx-auto mb-3"></i>
+                    <p class="text-2xl font-bold mb-1 text-gray-100">Drop Video or Image Here</p>
+                    <p class="text-gray-400">or click to select file (Max size 100MB recommended)</p>
+                    <input type="file" id="file-input" class="hidden" accept="video/*,image/*">
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="bg-orange-500 h-3 rounded-full transition-all duration-500 ease-out" :style="{ width: progress + '%' }"></div>
+            </div>
+
+            <!-- PROCESSING SECTION -->
+            <div id="processing-section" class="hidden mt-8">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">2. Processing Media...</h3>
+                <div class="processing-bar w-full h-8 mb-4">
+                    <div id="progress-fill" class="progress-fill text-xs text-white flex justify-center items-center font-bold" style="width: 0%">
+                        0%
+                    </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500 text-center italic">
-                    <span v-if="currentProcessStep === 1">1. Uploading file to backend...</span>
-                    <span v-else-if="currentProcessStep === 2">2. Server is executing FFmpeg compression...</span>
-                    <span v-else-if="currentProcessStep === 3">3. Downloading result segments...</span>
-                    <span v-else>Processing complete...</span>
+                <p id="processing-status" class="text-center text-sm text-gray-400">
+                    Initializing compression pipeline...
                 </p>
+            </div>
+
+            <!-- RESULTS SECTION -->
+            <div id="results-section" class="hidden mt-8 space-y-4">
+                <h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3>
+                <p class="text-center text-gray-400">Your optimized segments are ready for download.</p>
+                <!-- Download cards will be inserted here -->
             </div>
             
-            <!-- Error Message -->
-            <div v-if="error" class="mt-4 p-4 bg-red-100 border border-red-500 text-red-700 rounded-xl shadow-md">
-                <p class="font-bold">Error:</p>
-                <p class="text-sm whitespace-pre-wrap">{{ error }}</p>
-            </div>
-        </section>
-
-        <!-- Result/Preview Section -->
-        <section v-if="compressedFiles.length > 0" class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl mb-8 border-b-8 border-orange-500 card-shadow">
-            <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
-                Optimization Complete! 🎉
-            </h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Original File Info -->
-                <div class="p-4 border border-gray-300 rounded-xl bg-gray-50 shadow-md">
-                    <h3 class="text-xl font-bold mb-3 text-gray-700">Original File</h3>
-                    <p class="text-sm text-gray-600 font-semibold mb-2 truncate">Name: {{ originalFile.name }}</p>
-                    <div v-if="originalFile.url" class="aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
-                        <component :is="originalFile.type.startsWith('video') ? 'video' : 'img'" 
-                                   :src="originalFile.url" controls class="w-full h-full object-contain"></component>
-                    </div>
-                    <p class="mt-3 text-sm text-gray-600 font-semibold">Size: {{ originalFileSize }}</p>
-                </div>
-
-                <!-- Compressed Files (Segments) -->
-                <div class="p-4 border border-orange-400 rounded-xl bg-orange-50 shadow-md">
-                    <h3 class="text-xl font-bold mb-3 text-orange-700">Optimized Segments (Mock Preview)</h3>
-                    
-                    <div class="relative mb-4">
-                        <p class="font-semibold text-sm mb-1 text-center text-gray-600">Mock Output (Segment 1):</p>
-                        <div v-if="compressedFiles[0] && compressedFiles[0].type" class="aspect-video rounded-lg overflow-hidden border border-gray-300">
-                            <!-- Show original video/image as mock output -->
-                            <component :is="compressedFiles[0].type.startsWith('video') ? 'video' : 'img'" 
-                                       :src="originalFile.url" controls class="w-full h-full object-contain"></component>
-                            
-                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-lg font-bold">
-                                MOCK COMPRESSED FILE
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
-                        <div v-for="(file, index) in compressedFiles" :key="index"
-                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-white rounded-lg shadow-md border border-orange-200 hover:shadow-lg transition">
-                            <div class="flex-1 min-w-0">
-                                <p class="font-semibold truncate text-gray-800">{{ file.name }}</p>
-                                <p class="text-xs text-gray-500 mt-1 sm:mt-0">Size: {{ formatSize(file.size) }}</p>
-                            </div>
-                            <a :href="file.url" :download="file.name"
-                                class="w-full sm:w-auto mt-2 sm:mt-0 px-4 py-2 bg-fuchsia-500 text-white text-sm font-semibold rounded-full hover:bg-fuchsia-600 transition-colors shadow-lg cta-button">
-                                Download (Mock)
-                            </a>
-                        </div>
-                    </div>
-                    <p v-if="compressedFiles.length > 1" class="mt-4 text-sm text-gray-600 italic text-center">
-                        Video was split into {{ compressedFiles.length }} status segments (Mock).
-                    </p>
-                </div>
-            </div>
-
-            <!-- AI Caption Generator -->
-            <div class="mt-8 p-6 border-4 border-dashed border-violet-500 rounded-2xl bg-violet-50 shadow-xl">
-                <h3 class="text-2xl font-extrabold mb-4 text-violet-700 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v2.101a20.07 20.07 0 003.731 2.373l.514-.14a1 1 0 011.086.586l.1.341a1 1 0 01-.48 1.059l-1.391.73a20.007 20.007 0 00-.001 7.202l1.392.731a1 1 0 01.48 1.059l-.1.341a1 1 0 01-1.086.586l-.514-.14A20.07 20.07 0 0012 17.899V20a1 1 0 01-.7 1.046l-4-1a1 1 0 01-.6-1.046V17.899a20.07 20.07 0 00-3.731-2.373l-.514.14a1 1 0 01-1.086-.586l-.1-.341a1 1 0 01.48-1.059l1.391-.73A20.007 20.007 0 004 8.2l-1.392-.731a1 1 0 01-.48-1.059l.1-.341a1 1 0 011.086-.586l.514.14A20.07 20.07 0 008.7 2.101V2a1 1 0 01.6-1.046l4 1zM7 11V9h2v2H7zm4-2h2v2h-2V9z" clip-rule="evenodd" /></svg>
-                    AI Caption Generator ✨
+            <!-- AI CAPTION GENERATOR SECTION -->
+            <div id="ai-caption-section" class="mt-8 pt-6 border-t border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300 flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-yellow-400 mr-2"></i> 
+                    AI Caption Generator
                 </h3>
+                <p class="text-center text-sm text-gray-400 mb-4">Generate catchy captions for your optimized content using Gemini AI.</p>
                 
-                <button v-if="!isGeneratingCaption && !generatedCaption" 
-                        @click="generateCaption"
-                        :disabled="isLoading"
-                        class="w-full py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-lg cta-button disabled:opacity-50">
-                    Generate Caption/Hashtags
-                </button>
-                
-                <div v-if="isGeneratingCaption" class="text-center py-4">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-4 border-violet-600 mx-auto"></div>
-                    <p class="mt-3 text-sm font-semibold text-violet-700">AI is searching for trending captions...</p>
-                </div>
+                <textarea id="ai-prompt-input" rows="3" class="w-full p-3 rounded-lg input-dark focus:ring-2 focus:ring-cyan-500 resize-none" placeholder="Describe your video/image content (e.g., 'A cat jumping into a box in slow motion')"></textarea>
 
-                <div v-if="generatedCaption" class="mt-4 p-4 bg-white rounded-xl border border-violet-300 shadow-lg">
-                    <p class="font-extrabold text-xl text-violet-800 mb-3">Generated Content:</p>
-                    <p class="text-gray-800 whitespace-pre-wrap">{{ generatedCaption }}</p>
-                    <button @click="copyToClipboard(generatedCaption)" 
-                            class="mt-4 w-full text-md py-3 bg-violet-500 text-white font-bold rounded-xl hover:bg-violet-600 transition-colors shadow-lg cta-button">
-                        Copy
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button id="generate-caption-button" class="btn-primary flex-1 flex items-center justify-center">
+                        <span id="caption-spinner" class="hidden loading-ring mr-2"></span>
+                        <i data-lucide="magic-wand" class="w-5 h-5 mr-2" id="magic-wand-icon"></i> 
+                        Generate 3 Status Captions
+                    </button>
+                    <button id="clear-captions-button" class="btn-primary flex-1 opacity-70 hover:opacity-100 transition duration-200" style="background: #374151;" onclick="document.getElementById('ai-results').innerHTML = ''">
+                        Clear Results
                     </button>
                 </div>
+
+                <div id="ai-results" class="mt-6 space-y-3">
+                    <!-- AI generated captions will appear here -->
+                </div>
             </div>
-        </section>
-        
-        <!-- Mock Processing History Section -->
-          <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-b-8 border-gray-200 card-shadow">
-            <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
-                Processing History
-            </h2>
-            <div class="flex flex-col items-center justify-center h-24 text-gray-500 italic">
-                <svg class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                No processed items yet. Start optimizing!
+
+            <!-- ******************************************************************* -->
+            <!-- 2. ADVERTISEMENT SLOT - FOOTER BANNER -->
+            <!-- Your provided ad code integrated here. -->
+            <div class="ad-container overflow-hidden">
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : '16a502080d5a846fc5b18c305ec9b6b7',
+                        'format' : 'iframe',
+                        'height' : 60,
+                        'width' : 468,
+                        'params' : {}
+                    };
+                </script>
+                <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
             </div>
-        </section>
+            <!-- ******************************************************************* -->
 
-    </main>
-
-    <!-- ------------------------------------------------------------------ -->
-    <!-- FIXED FOOTER -->
-    <!-- ------------------------------------------------------------------ -->
-    <footer class="w-full bg-gray-900 shadow-inner p-2 text-center fixed bottom-0 left-0 right-0 z-50 fixed-footer-height">
-        <p class="text-sm font-medium text-white">
-            &copy; 2024 NancySocialSolutions. All rights reserved.
-        </p>
-    </footer>
-
-    <!-- ------------------------------------------------------------------ -->
-    <!-- BOTTOM AD SLOT: Fixed 468x60 Banner - AdZilla Integration -->
-    <!-- Positioned fixed right ABOVE the fixed footer (bottom: 40px) -->
-    <!-- ------------------------------------------------------------------ -->
-    <div class="ad-slot-bottom w-full shadow-2xl fixed bottom-[40px] left-0 right-0 z-40 overflow-hidden ad-slot-fixed bg-gray-900/90 border-t border-gray-700">
-        <div class="ad-slot-container">
-            <!-- Ad Code Placeholder: This script is for banner ads only -->
-            <script type="text/javascript">
-                atOptions = {
-                    'key' : '16a502080d5a846fc5b18c305ec9b6b7',
-                    'format' : 'iframe',
-                    'height' : 60,
-                    'width' : 468,
-                    'params' : {}
-                };
-            </script>
-            <script type="text/javascript" src="//www.highperformanceformat.com/16a502080d5a846fc5b18c305ec9b6b7/invoke.js"></script>
-            <!-- End Ad Code Placeholder -->
-        </div>
-    </div>
-    <!-- ------------------------------------------------------------------ -->
-
-
-    <!-- Settings Modal -->
-    <div v-if="isSettingsOpen" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 transition-opacity">
-        <div class="bg-white rounded-2xl shadow-3xl w-full max-w-md p-6 transform transition-all scale-100">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-700">Settings</h3>
-                <button @click="isSettingsOpen = false" class="p-2 rounded-full hover:bg-gray-100">
-                    <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            <!-- Upload Button (for mobile interaction, always visible under the content) -->
+            <div class="mt-6 text-center">
+                <button id="upload-button" class="btn-primary w-full max-w-xs" onclick="document.getElementById('file-input').click()">
+                    Select File
                 </button>
             </div>
-
-            <div class="mb-6 p-4 border border-fuchsia-400 bg-fuchsia-50 rounded-xl">
-                <label class="block text-lg font-semibold text-gray-700 mb-2">Target Platform</label>
-                <select v-model="settings.targetPlatform" class="w-full p-3 border-2 border-fuchsia-300 rounded-lg focus:ring-fuchsia-500 focus:border-fuchsia-500 font-medium">
-                    <!-- LaTeX formatting applied for the scientific notation (bitrate) -->
-                    <option value="whatsapp_status">WhatsApp Status (Max $600 \text{ Kbps}$)</option>
-                    <option value="instagram_reel">Instagram Reel/Story (HD/4K)</option>
-                </select>
-                <p class="text-xs text-gray-600 mt-2">The platform setting is currently **Mocked** and would typically inform the backend processing logic.</p>
-            </div>
-
-            <button @click="isSettingsOpen = false" class="w-full mt-6 py-3 bg-fuchsia-600 text-white font-bold rounded-xl hover:bg-fuchsia-700 transition-colors shadow-lg cta-button">
-                Close
-            </button>
+            
         </div>
-    </div>
+    </main>
 
-</div>
+    <!-- Footer -->
+    <footer class="footer-bar w-full p-3 text-center text-sm mt-auto">
+        &copy; 2024 NancySocialSolutions. All rights reserved.
+    </footer>
 
-<script type="text/javascript">
-    const { ref, reactive, computed, createApp, nextTick } = Vue;
+    <script type="module">
+        // --- Configuration ---
+        const OPTIMIZER_API_URL = 'https://status-optimizer-service-420017097259.us-central1.run.app';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
+        const API_KEY = ""; // Placeholder API Key
 
-    // Utility function for robust fetching with exponential backoff (defined globally for clarity)
-    async function fetchWithRetry(url, options, maxRetries = 5) {
-        for (let i = 0; i < maxRetries; i++) {
+        // --- UI Elements ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const uploadSection = document.getElementById('upload-section');
+        const processingSection = document.getElementById('processing-section');
+        const resultsSection = document.getElementById('results-section');
+        const progressFill = document.getElementById('progress-fill');
+        const processingStatus = document.getElementById('processing-status');
+        const statusContainer = document.getElementById('status-message-container');
+        
+        // AI Elements
+        const aiPromptInput = document.getElementById('ai-prompt-input');
+        const generateCaptionButton = document.getElementById('generate-caption-button');
+        const aiResultsContainer = document.getElementById('ai-results');
+        const captionSpinner = document.getElementById('caption-spinner');
+        const magicWandIcon = document.getElementById('magic-wand-icon');
+
+        // Initialize icons
+        lucide.createIcons();
+
+        // --- State Management ---
+        let isProcessing = false;
+        let isGeneratingAI = false;
+
+        // --- Utility Functions ---
+
+        /** Converts file size in bytes to a human-readable string (MB). */
+        const formatFileSize = (bytes) => {
+            if (bytes === 0) return '0 Bytes';
+            const megabytes = bytes / (1024 * 1024);
+            return `${megabytes.toFixed(2)} MB`;
+        };
+
+        /** * Displays a temporary status message (error or info).
+         * @param {string} message - The message content.
+         * @param {string} type - 'error' or 'info'.
+         */
+        const showStatusMessage = (message, type = 'info') => {
+            statusContainer.innerHTML = ''; 
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('text-center', 'font-semibold', 'p-4', 'rounded-xl', 'mb-4', 'shadow-lg');
+
+            if (type === 'error') {
+                messageDiv.classList.add('error-message');
+                messageDiv.innerHTML = `<p><i data-lucide="alert-triangle" class="w-5 h-5 inline mr-2 text-red-400"></i> **Error:** ${message}</p>`;
+            } else {
+                messageDiv.classList.add('info-message');
+                messageDiv.innerHTML = `<p><i data-lucide="info" class="w-5 h-5 inline mr-2 text-blue-400"></i> ${message}</p>`;
+            }
+            statusContainer.appendChild(messageDiv);
+            lucide.createIcons();
+        };
+        
+        /** Renders the download card for a processed segment. */
+        const renderDownloadCard = (segment, index) => {
+            const card = document.createElement('div');
+            card.classList.add('card', 'p-4', 'flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'border', 'border-cyan-500', 'shadow-xl');
+            
+            const fileTitle = segment.fileName || `Optimized_Segment_${index + 1}.mp4`;
+            
+            card.innerHTML = `
+                <div class="mb-4 md:mb-0 md:mr-6 text-center md:text-left">
+                    <p class="font-bold text-gray-100 break-words">${fileTitle}</p>
+                    <p class="text-sm text-gray-400">Size: ${formatFileSize(segment.size)}</p>
+                </div>
+                <a href="${segment.url}" download="${fileTitle}" class="btn-primary text-center w-full md:w-auto mt-2 md:mt-0">
+                    <i data-lucide="download" class="w-4 h-4 inline mr-2"></i> Download File
+                </a>
+            `;
+            resultsSection.appendChild(card);
+            lucide.createIcons();
+        };
+
+        /** Updates the processing progress UI. */
+        const updateProgress = (percent, statusText) => {
+            const width = Math.min(100, Math.max(0, percent));
+            progressFill.style.width = `${width}%`;
+            progressFill.textContent = `${Math.round(width)}%`;
+            processingStatus.textContent = statusText;
+        };
+
+        /** Hides all main sections except the specified one. */
+        const setUIMode = (showSectionId) => {
+            uploadSection.classList.add('hidden');
+            processingSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            uploadButton.classList.add('hidden');
+            statusContainer.innerHTML = '';
+
+            if (showSectionId === 'upload') {
+                uploadSection.classList.remove('hidden');
+                uploadButton.classList.remove('hidden');
+            } else if (showSectionId === 'processing') {
+                processingSection.classList.remove('hidden');
+            } else if (showSectionId === 'results') {
+                resultsSection.classList.remove('hidden');
+            }
+        };
+
+        // --- Core Logic (Video/Image Optimization) ---
+
+        /** Handles the file upload and initiates the compression process. */
+        const startCompression = async (file) => {
+            if (isProcessing) return;
+            isProcessing = true;
+            setUIMode('processing');
+            resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>'; // Reset results
+
+            if (file.type.startsWith('image/')) {
+                 showStatusMessage('Image detected! Performing fast client-side optimization.', 'info');
+                 await processImageClientSide(file);
+                 isProcessing = false;
+                 return;
+            } else if (!file.type.startsWith('video/')) {
+                showStatusMessage('Unsupported file type. Please upload a video or image file.', 'error');
+                setUIMode('upload');
+                isProcessing = false;
+                return;
+            }
+
+            // --- Video Processing (Server-Side via Cloud Run API) ---
+            const formData = new FormData();
+            formData.append('file', file);
+            updateProgress(0, `Uploading ${file.name} (${formatFileSize(file.size)})...`);
+
             try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // 1. UPLOAD STAGE
+                const uploadResponse = await fetch(`${OPTIMIZER_API_URL}/upload`, { method: 'POST', body: formData });
+                if (!uploadResponse.ok) { throw new Error(`Upload failed with status ${uploadResponse.status}. Server response may be unavailable.`); }
+                const uploadData = await uploadResponse.json();
+                const fileId = uploadData.fileId;
+                updateProgress(20, `File uploaded. Starting server-side FFmpeg compression...`);
+
+                // 2. PROCESS STAGE
+                const processResponse = await fetch(`${OPTIMIZER_API_URL}/process`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileId: fileId })
+                });
+                if (!processResponse.ok) { throw new Error(`Processing failed with status ${processResponse.status}.`); }
+                const processData = await processResponse.json();
+                const jobId = processData.jobId;
+                updateProgress(40, `Compression job started (ID: ${jobId}). Waiting for results...`);
+
+                // 3. POLLING STAGE (Wait for job to complete)
+                let jobComplete = false;
+                let finalResult = null;
+                const pollInterval = 3000;
+                let attempts = 0;
+                while (!jobComplete && attempts < 100) { 
+                    attempts++;
+                    await new Promise(resolve => setTimeout(resolve, pollInterval));
+                    const statusResponse = await fetch(`${OPTIMIZER_API_URL}/status?jobId=${jobId}`);
+                    
+                    if (!statusResponse.ok) {
+                         console.error("Status check failed. Retrying...");
+                         updateProgress(40 + (attempts * 0.5), `Server Status Check Failed (Attempt ${attempts}). Retrying...`);
+                         continue;
+                    }
+                    const statusData = await statusResponse.json();
+                    
+                    if (statusData.status === 'completed') {
+                        jobComplete = true;
+                        finalResult = statusData;
+                    } else if (statusData.status === 'failed') {
+                        throw new Error(`Video processing failed on the server. Details: ${statusData.error}`);
+                    } else {
+                        const progress = 40 + (attempts * 0.5); 
+                        updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
+                    }
                 }
-                return response;
+                
+                if (!finalResult) { throw new Error("Job timed out. The server took too long to respond."); }
+                updateProgress(100, 'All segments successfully optimized!');
+                
+                // 4. DISPLAY RESULTS
+                if (finalResult.segments && finalResult.segments.length > 0) {
+                    showStatusMessage(`Success! Video split into ${finalResult.segments.length} optimized 30-second segments.`, 'info');
+                    finalResult.segments.forEach(renderDownloadCard);
+                    setUIMode('results');
+                } else {
+                    throw new Error("Server completed the job but returned no downloadable segments.");
+                }
+
             } catch (error) {
-                if (i === maxRetries - 1) throw error;
-                const delay = Math.pow(2, i) * 1000;
-                await new Promise(resolve => setTimeout(resolve, delay));
+                console.error("Compression Error:", error);
+                showStatusMessage(error.message || "An unknown error occurred during compression. Please ensure the backend service is running.", 'error');
+                setUIMode('upload');
+            } finally {
+                isProcessing = false;
             }
-        }
-    }
+        };
 
-    createApp({
-        setup() {
-            // --- State ---
-            const isLoading = ref(false);
-            const loadingMessage = ref("Waiting for file upload...");
-            const error = ref(null);
-            const progress = ref(0);
-            const isDragOver = ref(false);
-            const currentProcessStep = ref(0); // 0: Idle, 1: Upload, 2: Execute, 3: Download
+        /** Processes images locally using the Canvas API for compression. */
+        const processImageClientSide = (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0, img.width, img.height);
+                            
+                            // Compress using JPEG at 80% quality
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    showStatusMessage("Could not compress image.", 'error');
+                                    setUIMode('upload');
+                                    return resolve();
+                                }
+                                
+                                const originalSize = file.size;
+                                const compressedSize = blob.size;
+                                const compressedUrl = URL.createObjectURL(blob);
+                                
+                                setUIMode('results');
+                                showStatusMessage(`Image optimization complete! Original Size: ${formatFileSize(originalSize)} | New Size: ${formatFileSize(compressedSize)}`, 'info');
 
-            const originalFile = reactive({ name: '', type: '', url: '', size: 0, file: null, extension: '' });
-            const compressedFiles = ref([]);
-            const isSettingsOpen = ref(false);
-            
-            const settings = reactive({ 
-                targetPlatform: 'whatsapp_status'
-            });
-            
-            const isGeneratingCaption = ref(false);
-            const generatedCaption = ref('');
-            const apiKey = ""; // API key is handled by the environment
-            
-            const APP_PREFIX = "StatusMantra_"; 
+                                const segment = {
+                                    fileName: `optimized_${file.name.replace(/\.[^/.]+$/, "")}.jpg`,
+                                    size: compressedSize,
+                                    url: compressedUrl
+                                };
+                                renderDownloadCard(segment, 0);
 
-            // --- Computed ---
-            const originalFileSize = computed(() => formatSize(originalFile.size));
+                                resolve();
+                            }, 'image/jpeg', 0.8);
 
-            // --- Methods ---
-
-            function formatSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-            
-            function resetState() {
-                error.value = null;
-                progress.value = 0;
-                currentProcessStep.value = 0;
-                // Revoke old URLs to free memory
-                compressedFiles.value.forEach(f => URL.revokeObjectURL(f.url));
-                originalFile.url = '';
-                
-                originalFile.name = ''; originalFile.type = ''; 
-                originalFile.size = 0; originalFile.extension = ''; originalFile.file = null;
-                compressedFiles.value = [];
-                generatedCaption.value = '';
-            }
-
-            function handleFileDrop(event) {
-                event.preventDefault();
-                isDragOver.value = false;
-                const files = event.dataTransfer.files;
-                if (files.length > 0) processFile(files[0]);
-            }
-
-            function handleFileUpload(event) {
-                const files = event.target.files;
-                if (files.length > 0) processFile(files[0]);
-            }
-
-            function processFile(file) {
-                resetState();
-                
-                originalFile.name = file.name;
-                originalFile.type = file.type;
-                originalFile.size = file.size;
-                originalFile.file = file; // Store the actual file object
-                const parts = file.name.split('.');
-                originalFile.extension = parts.length > 1 ? '.' + parts.pop() : '';
-
-                originalFile.url = URL.createObjectURL(file);
-
-                runMockFFmpeg();
-            }
-            
-            // --- MOCK API/FFmpeg Execution Logic (Simulates Server Processing) ---
-            async function runMockFFmpeg() {
-                isLoading.value = true;
-                error.value = null;
-                progress.value = 0;
-                
-                // --- NOTE FOR BACKEND INTEGRATION ---
-                // In a real application, you would replace this mock function with code that:
-                // 1. Uploads the 'originalFile.file' to a server endpoint.
-                // 2. The server uses FFmpeg (e.g., in a Cloud Function/Cloud Run container) 
-                //    to process the file based on 'settings.targetPlatform'.
-                // 3. The server returns the optimized file URLs or the file data.
-                
-                const isVideo = originalFile.type.startsWith('video');
-                const isWhatsApp = settings.targetPlatform === 'whatsapp_status';
-                
-                // Mock: If video and WhatsApp target, split into 1-3 segments. Otherwise, 1.
-                const mockSegmentCount = isVideo && isWhatsApp ? Math.floor(Math.random() * 3) + 1 : 1;
-                
-                try {
-                    // 1. Simulate Upload
-                    currentProcessStep.value = 1;
-                    loadingMessage.value = `1. Uploading ${originalFile.name} to server...`;
-                    await new Promise(resolve => setTimeout(resolve, 1500)); 
-                    progress.value = 30;
-
-                    // 2. Simulate Server FFmpeg Execution
-                    currentProcessStep.value = 2;
-                    loadingMessage.value = `2. Server is executing FFmpeg compression for ${settings.targetPlatform}... (Estimated ${3 + mockSegmentCount}s)`;
-                    
-                    // Mock progress updates
-                    for(let i = 0; i < 7; i++) {
-                        await new Promise(resolve => setTimeout(resolve, 500)); 
-                        progress.value = 30 + (i * 10);
-                    }
-                    
-                    // Simulate processing time
-                    await new Promise(resolve => setTimeout(resolve, 1000 * mockSegmentCount)); 
-                    
-                    progress.value = 90;
-
-                    // 3. Simulate Downloading Results
-                    currentProcessStep.value = 3;
-                    loadingMessage.value = "3. Downloading compressed files...";
-                    
-                    const newCompressedFiles = [];
-                    for(let i = 0; i < mockSegmentCount; i++) {
-                        // Use original file URL and a smaller mock size.
-                        const mockSize = isVideo ? (originalFile.size / mockSegmentCount) * 0.4 : originalFile.size * 0.6;
-                        
-                        const finalName = `${APP_PREFIX}${settings.targetPlatform}_segment_${i + 1}_${originalFile.name.replace(originalFile.extension, '')}.mp4`;
-                        
-                        newCompressedFiles.push({
-                            name: finalName,
-                            url: originalFile.url, 
-                            size: mockSize,
-                            type: originalFile.type,
-                        });
-                        await new Promise(resolve => setTimeout(resolve, 300));
-                    }
-                    
-                    compressedFiles.value = newCompressedFiles;
-
-                    await nextTick();
-                    loadingMessage.value = "Optimization Complete! Download available.";
-                    progress.value = 100;
-
-                } catch (e) {
-                    console.error("Mock Execution Error:", e);
-                    error.value = `Media processing failed. Please check backend connection. Error: ${e.message}`;
-                } finally {
-                    isLoading.value = false;
-                    currentProcessStep.value = 4; // Done
-                }
-            }
-
-
-            // --- Other Utility Functions (Gemini API for Caption) ---
-            
-            // AI Caption Generator implementation using Gemini API (with Google Search grounding)
-            async function generateCaption() {
-                isGeneratingCaption.value = true;
-                generatedCaption.value = '';
-                error.value = null;
-
-                const fileInfo = originalFile.name ? ` based on the uploaded file named "${originalFile.name}" (${originalFileSize.value}).` : ".";
-                
-                const userQuery = `Generate a trending, engaging caption and 3-5 relevant Hindi and English hashtags for a short video or image intended for social media status${fileInfo} Focus on modern, relatable content.`;
-                
-                const systemPrompt = "You are a creative social media manager specializing in viral status updates for platforms like WhatsApp and Instagram. Provide a single, concise block of text containing the caption followed by relevant hashtags.";
-
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                        } catch (e) {
+                            showStatusMessage("Error processing image in browser.", 'error');
+                            setUIMode('upload');
+                            resolve(); // Resolve even on error to clear processing state
+                        }
+                    };
+                    img.src = event.target.result;
                 };
+                reader.onerror = () => {
+                    showStatusMessage("Error reading file.", 'error');
+                    setUIMode('upload');
+                    resolve();
+                };
+                reader.readAsDataURL(file);
+            });
+        };
 
-                try {
-                    const response = await fetchWithRetry(apiUrl, {
+        // --- AI Caption Generator Logic ---
+
+        /** Generates captions using the Gemini API. */
+        const generateAICaptions = async () => {
+            if (isGeneratingAI) return;
+            const userPrompt = aiPromptInput.value.trim();
+            if (!userPrompt) {
+                showStatusMessage("Please describe your video/image content before generating captions.", 'error');
+                return;
+            }
+
+            isGeneratingAI = true;
+            aiResultsContainer.innerHTML = '';
+            captionSpinner.classList.remove('hidden');
+            magicWandIcon.classList.add('hidden');
+            generateCaptionButton.disabled = true;
+
+            const systemPrompt = "You are a creative social media manager specializing in short, viral video captions. Your task is to generate three unique, catchy, and status-ready captions based on the user's content description. Each caption must be distinct and ready to be used on platforms like WhatsApp or Instagram Stories. Format your final output as a numbered list.";
+            const userQuery = `Generate 3 captions for content described as: "${userPrompt}"`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let responseText = "Failed to generate captions.";
+            
+            try {
+                // Using exponential backoff for robustness
+                for (let i = 0; i < 3; i++) { // Max 3 retries
+                    const response = await fetch(GEMINI_API_URL + API_KEY, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
-                    const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate caption. Please try again.";
-                    
-                    generatedCaption.value = text;
-                } catch (e) {
-                    console.error("Gemini API Error:", e);
-                    error.value = "Failed to generate caption. API request failed.";
-                } finally {
-                    isGeneratingCaption.value = false;
+                    if (response.ok) {
+                        const result = await response.json();
+                        responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response received from AI model.";
+                        break; // Success
+                    } else if (i < 2) {
+                        // Retry with exponential backoff
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                    } else {
+                        throw new Error(`API call failed with status ${response.status}`);
+                    }
                 }
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                responseText = "Sorry, the AI caption generator failed to connect or process your request. Please try again later.";
+            } finally {
+                captionSpinner.classList.add('hidden');
+                magicWandIcon.classList.remove('hidden');
+                generateCaptionButton.disabled = false;
             }
-            
-            // Copy to clipboard using a reliable fallback
-            function copyToClipboard(text) {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                // Make the textarea invisible and append to body
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = 0;
-                document.body.appendChild(textarea);
-                textarea.select();
-                
-                try {
-                    // Use document.execCommand('copy') for better compatibility in iFrames
-                    document.execCommand('copy');
-                    error.value = "Caption copied to clipboard! ✅";
-                    // Clear the temporary success message after 3 seconds
-                    setTimeout(() => error.value = null, 3000); 
-                } catch (err) {
-                    console.error('Could not copy text: ', err);
-                    error.value = 'Failed to copy text. Please copy manually.';
-                }
-                document.body.removeChild(textarea);
-            }
-            
-            return {
-                // State & Settings
-                isLoading, loadingMessage, error, progress, isDragOver, currentProcessStep,
-                originalFile, originalFileSize, compressedFiles,
-                isSettingsOpen, settings,
-                
-                // Gemini State
-                isGeneratingCaption, generatedCaption,
 
-                // Methods
-                handleFileDrop, handleFileUpload,
-                formatSize,
-                generateCaption, copyToClipboard,
-            };
-        }
-    }).mount('#app');
-</script>
+            // Display results
+            const captions = responseText.split('\n').filter(line => line.trim().length > 0);
+            
+            if (captions.length > 0) {
+                captions.forEach((caption, index) => {
+                    const captionDiv = document.createElement('div');
+                    captionDiv.classList.add('ai-result-card', 'p-3', 'rounded-lg', 'text-gray-200', 'text-sm', 'break-words', 'flex', 'items-center', 'justify-between');
+                    captionDiv.innerHTML = `
+                        <span class="mr-2 font-bold text-cyan-400">${index + 1}.</span>
+                        <span class="flex-grow">${caption.replace(/^\d+\.\s*/, '')}</span>
+                        <button class="copy-btn ml-3 p-1 rounded-md bg-pink-600 hover:bg-pink-500 transition duration-200" title="Copy">
+                            <i data-lucide="copy" class="w-4 h-4 text-white"></i>
+                        </button>
+                    `;
+                    aiResultsContainer.appendChild(captionDiv);
+                });
+                lucide.createIcons();
+                
+                // Attach copy functionality
+                document.querySelectorAll('.copy-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const captionText = e.currentTarget.previousElementSibling.textContent.trim();
+                        // Use execCommand for broader compatibility in iframes
+                        const textarea = document.createElement('textarea');
+                        textarea.value = captionText;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+
+                        e.currentTarget.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-white"></i>';
+                        e.currentTarget.classList.remove('bg-pink-600');
+                        e.currentTarget.classList.add('bg-green-600');
+                        lucide.createIcons();
+
+                        setTimeout(() => {
+                            e.currentTarget.innerHTML = '<i data-lucide="copy" class="w-4 h-4 text-white"></i>';
+                            e.currentTarget.classList.remove('bg-green-600');
+                            e.currentTarget.classList.add('bg-pink-600');
+                            lucide.createIcons();
+                        }, 2000);
+                    });
+                });
+            } else {
+                 // Display failure message
+                const failDiv = document.createElement('div');
+                failDiv.classList.add('error-message', 'p-3', 'rounded-lg', 'text-center');
+                failDiv.textContent = responseText;
+                aiResultsContainer.appendChild(failDiv);
+            }
+        };
+
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { startCompression(e.target.files[0]); } });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) { startCompression(e.dataTransfer.files[0]); }
+        });
+
+        dropZone.addEventListener('click', () => { if (!isProcessing) { fileInput.click(); } });
+        
+        generateCaptionButton.addEventListener('click', generateAICaptions);
+
+        // Initial setup
+        setUIMode('upload');
+    </script>
 </body>
 </html>
