@@ -214,11 +214,13 @@
 
     <script type="module">
         // --- Configuration ---
-        // 🚨 FIX: Using the confirmed, deployed Cloud Run URL from your screenshot.
+        // 🚨 CRITICAL: Using the confirmed, deployed Cloud Run URL from your screenshot.
         const OPTIMIZER_API_URL = 'https://status-optimizer-service-420017097259.us-central1.run.app'; 
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
         // 🚨 CRITICAL: Replace this with your actual Gemini API Key to enable captions.
         const API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+        const UPLOAD_TIMEOUT_MS = 30000; // 30 seconds for upload
+        const TOTAL_PROCESS_TIMEOUT_MS = 300000; // 5 minutes for total processing
 
         // --- UI Elements ---
         const dropZone = document.getElementById('drop-zone');
@@ -274,12 +276,8 @@
             const card = document.createElement('div');
             card.classList.add('card', 'p-4', 'flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'border', 'border-cyan-500', 'shadow-xl');
             
-            // Check if the URL is a local blob URL or an external link
             const isPlaceholder = segment.url === '#';
             const fileTitle = segment.fileName || `Optimized_Segment_${index + 1}.mp4`;
-
-            // Note: If the actual server is working, 'segment.url' will be the real download link.
-            // If the server is not accessible, this is the last point of failure for video download.
             
             card.innerHTML = `
                 <div class="mb-4 md:mb-0 md:mr-6 text-center md:text-left">
@@ -321,6 +319,53 @@
         };
 
         // --- Core Logic (Video/Image Optimization) ---
+        
+        /** Uploads file using XMLHttpRequest for progress tracking and returns a Promise. */
+        const uploadFileWithProgress = (file) => {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append('file', file);
+
+                xhr.open('POST', `${OPTIMIZER_API_URL}/upload`);
+                xhr.timeout = UPLOAD_TIMEOUT_MS;
+
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 20; // 0% to 20% is upload
+                        updateProgress(percent, `Uploading ${file.name} (${formatFileSize(e.total)})...`);
+                    }
+                });
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText));
+                        } catch (e) {
+                            reject(new Error("Server returned an invalid JSON response after upload."));
+                        }
+                    } else {
+                        // Attempt to parse server error response if available
+                        let errorDetail = xhr.responseText.substring(0, 100);
+                        if (errorDetail.includes('<') || errorDetail.includes('>')) {
+                             errorDetail = "No detailed server error message available.";
+                        }
+                        reject(new Error(`Upload failed. Status: ${xhr.status}. Server Error: ${errorDetail}`));
+                    }
+                };
+
+                xhr.ontimeout = () => {
+                    reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000} seconds. Check your internet connection or server capacity.`));
+                };
+
+                xhr.onerror = () => {
+                    reject(new Error("Network error occurred during upload. Check your connection or CORS configuration on the server."));
+                };
+
+                xhr.send(formData);
+            });
+        };
+
 
         /** Handles the file upload and initiates the compression process. */
         const startCompression = async (file) => {
@@ -346,21 +391,25 @@
             // --- Video Processing (Server-Side via Cloud Run API) ---
             showStatusMessage('Video file detected. Using deployed Cloud Run API for processing...', 'info');
 
-            const formData = new FormData();
-            formData.append('file', file);
-            updateProgress(0, `Uploading ${file.name} (${formatFileSize(file.size)})...`);
-
+            let timeoutId;
             try {
-                // 1. UPLOAD STAGE
-                // 🚨 FIX: Restoring actual API call logic for upload and processing
-                const uploadResponse = await fetch(`${OPTIMIZER_API_URL}/upload`, { method: 'POST', body: formData });
-                if (!uploadResponse.ok) {  
-                    throw new Error(`Upload failed with status ${uploadResponse.status}. Is the API open to public access?`); 
-                }
-                const uploadData = await uploadResponse.json();
+                // Set overall processing timeout
+                const overallProcessTimeout = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error(`Total processing timed out after ${TOTAL_PROCESS_TIMEOUT_MS / 60000} minutes. The server is taking too long.`));
+                    }, TOTAL_PROCESS_TIMEOUT_MS);
+                });
+
+
+                // 1. UPLOAD STAGE (Using XHR for progress)
+                const uploadPromise = uploadFileWithProgress(file);
+                const uploadData = await Promise.race([uploadPromise, overallProcessTimeout]);
+                
+                clearTimeout(timeoutId); // Clear upload stage timeout
+
                 const fileId = uploadData.fileId;
                 updateProgress(20, `File uploaded. Starting server-side FFmpeg compression...`);
-
+                
                 // 2. PROCESS STAGE
                 const processResponse = await fetch(`${OPTIMIZER_API_URL}/process`, {
                     method: 'POST',
@@ -368,7 +417,8 @@
                     body: JSON.stringify({ fileId: fileId })
                 });
                 if (!processResponse.ok) {  
-                    throw new Error(`Processing failed with status ${processResponse.status}.`); 
+                     const errorText = await processResponse.text().catch(() => 'No response body.');
+                     throw new Error(`Processing initiation failed. Status: ${processResponse.status}. Details: ${errorText.substring(0, 100)}`);
                 }
                 const processData = await processResponse.json();
                 const jobId = processData.jobId;
@@ -377,39 +427,47 @@
                 // 3. POLLING STAGE (Wait for job to complete)
                 let jobComplete = false;
                 let finalResult = null;
-                const pollInterval = 5000; // Increased poll interval for robustness
+                const pollInterval = 5000; 
                 let attempts = 0;
-                while (!jobComplete && attempts < 60) { // Up to 5 minutes of polling
-                    attempts++;
-                    await new Promise(resolve => setTimeout(resolve, pollInterval));
-                    
-                    const statusResponse = await fetch(`${OPTIMIZER_API_URL}/status?jobId=${jobId}`);
-                    
-                    if (!statusResponse.ok) {
-                        console.error("Status check failed. Retrying...");
-                        updateProgress(40 + (attempts * 0.9), `Server Status Check Failed (Attempt ${attempts}). Retrying...`);
-                        continue;
-                    }
-                    const statusData = await statusResponse.json();
-                    
-                    if (statusData.status === 'completed') {
-                        jobComplete = true;
-                        finalResult = statusData;
-                    } else if (statusData.status === 'failed') {
-                        throw new Error(`Video processing failed on the server. Details: ${statusData.error || 'Unknown error.'}`);
-                    } else {
-                        const progress = Math.min(95, 40 + (attempts * 0.9)); 
-                        updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
-                    }
-                }
                 
-                if (!finalResult) { throw new Error("Job timed out. The server took too long to respond (60 attempts)."); }
+                const pollingPromise = new Promise(async (resolve, reject) => {
+                    while (!jobComplete && attempts < (TOTAL_PROCESS_TIMEOUT_MS / pollInterval)) { 
+                        attempts++;
+                        await new Promise(r => setTimeout(r, pollInterval));
+                        
+                        const statusResponse = await fetch(`${OPTIMIZER_API_URL}/status?jobId=${jobId}`);
+                        
+                        if (!statusResponse.ok) {
+                            console.error("Status check failed. Retrying...");
+                            updateProgress(40 + (attempts * 0.9), `Server Status Check Failed (Attempt ${attempts}). Retrying...`);
+                            continue;
+                        }
+                        const statusData = await statusResponse.json();
+                        
+                        if (statusData.status === 'completed') {
+                            jobComplete = true;
+                            finalResult = statusData;
+                            resolve();
+                        } else if (statusData.status === 'failed') {
+                            reject(new Error(`Video processing failed on the server. Details: ${statusData.error || 'Unknown error.'}`));
+                        } else {
+                            const progress = Math.min(95, 40 + (attempts * 0.9)); 
+                            updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
+                        }
+                    }
+                    if (!jobComplete) {
+                         reject(new Error("Job polling timed out. The server took too long to respond.")); 
+                    }
+                });
+
+                await Promise.race([pollingPromise, overallProcessTimeout]);
+                clearTimeout(timeoutId); // Clear total process timeout
+
                 updateProgress(100, 'All segments successfully optimized!');
                 
                 // 4. DISPLAY RESULTS
-                if (finalResult.segments && finalResult.segments.length > 0) {
+                if (finalResult && finalResult.segments && finalResult.segments.length > 0) {
                     showStatusMessage(`Success! Video split into ${finalResult.segments.length} optimized 30-second segments.`, 'info');
-                    // Now, the download card will use the real URL from the server response
                     finalResult.segments.forEach(renderDownloadCard);
                     setUIMode('results');
                 } else {
@@ -417,6 +475,7 @@
                 }
 
             } catch (error) {
+                clearTimeout(timeoutId);
                 console.error("Compression Error:", error);
                 updateProgress(0, 'Failed.'); 
                 showStatusMessage(error.message || "An unknown error occurred during video compression. Check if the Cloud Run service is active and publicly accessible.", 'error');
@@ -469,7 +528,7 @@
                                 
                                 const originalSize = file.size;
                                 const compressedSize = blob.size;
-                                // 🚨 FIX: This URL (blob URL) is the actual local download link for images.
+                                // This URL (blob URL) is the actual local download link for images.
                                 const compressedUrl = URL.createObjectURL(blob); 
                                 
                                 setUIMode('results');
@@ -504,7 +563,7 @@
             });
         };
 
-        // --- AI Caption Generator Logic (Unchanged from last fix, relies on API_KEY) ---
+        // --- AI Caption Generator Logic (Unchanged) ---
 
         const generateAICaptions = async () => {
             if (isGeneratingAI) return;
