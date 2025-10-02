@@ -55,6 +55,12 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(219, 39, 119, 0.5);
         }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
         .error-message {
             background-color: #451b2f; /* Darkened error background */
             color: #fca5a5; /* Light red text */
@@ -92,13 +98,27 @@
         
         /* Custom Ad Container for better centering and responsiveness */
         .ad-container {
-            margin: 2rem auto;
-            max-width: 468px; /* Max width matching the ad unit size */
-            height: 60px; /* Max height matching the ad unit size */
+            margin: 1.5rem auto; /* Adjusted margin for mobile */
+            max-width: 468px;
+            height: 60px;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
+        }
+
+        /* Custom Spinner Style */
+        .loading-ring {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -107,27 +127,29 @@
     <!-- Header -->
     <header class="app-header w-full shadow-2xl">
         <div class="max-w-4xl mx-auto p-4 flex justify-between items-center">
-            <h1 class="text-3xl font-black tracking-widest">STATUS<span class="text-gray-200 font-light">MANTRA</span></h1>
-            <span class="text-sm font-light opacity-80">AI Optimized Media</span>
+            <!-- Adjusted font size for mobile -->
+            <h1 class="text-xl sm:text-3xl font-black tracking-widest">STATUS<span class="text-gray-200 font-light">MANTRA</span></h1>
+            <span class="text-xs sm:text-sm font-light opacity-80">AI Optimized Media</span>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="w-full max-w-4xl p-4 flex-grow">
-        <div id="app-container" class="card p-6 md:p-10 my-8 w-full space-y-8">
+    <main class="w-full max-w-4xl p-2 sm:p-4 flex-grow">
+        <!-- Reduced p-6 md:p-10 to p-4 md:p-10 on the card for better mobile spacing -->
+        <div id="app-container" class="card p-4 md:p-10 my-4 sm:my-8 w-full space-y-8">
 
-            <h2 class="text-4xl font-extrabold text-center tracking-tighter">
+            <!-- Adjusted H2 font size for mobile -->
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-center tracking-tighter">
                 One-Click <span class="app-header bg-clip-text text-transparent">AI Media Optimization</span>
             </h2>
 
             <!-- Status Messages -->
-            <div id="status-message-container" class="mb-6">
+            <div id="status-message-container" class="mb-4">
                 <!-- Status Messages / Error messages will appear here -->
             </div>
 
             <!-- ******************************************************************* -->
             <!-- 1. ADVERTISEMENT SLOT - HEADER BANNER -->
-            <!-- Your provided ad code integrated here. -->
             <div class="ad-container overflow-hidden">
                 <script type="text/javascript">
                     atOptions = {
@@ -144,18 +166,19 @@
 
             <!-- UPLOAD SECTION -->
             <div id="upload-section">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">Upload File</h3>
-                <div id="drop-zone" class="drop-zone p-8 text-center cursor-pointer transition-all">
-                    <i data-lucide="video" class="w-12 h-12 text-teal-400 mx-auto mb-3"></i>
-                    <p class="text-2xl font-bold mb-1 text-gray-100">Drop Video or Image Here</p>
-                    <p class="text-gray-400">or click to select file (Max size 100MB recommended)</p>
+                <h3 class="text-lg sm:text-xl font-semibold mb-4 text-center text-gray-300">Upload File</h3>
+                <!-- Adjusted padding in drop zone for mobile (p-6) -->
+                <div id="drop-zone" class="drop-zone p-6 text-center cursor-pointer transition-all">
+                    <i data-lucide="video" class="w-10 h-10 sm:w-12 sm:h-12 text-teal-400 mx-auto mb-3"></i>
+                    <p class="text-xl sm:text-2xl font-bold mb-1 text-gray-100">Drop Video or Image Here</p>
+                    <p class="text-gray-400 text-sm sm:text-base">or click to select file (Max size 100MB recommended)</p>
                     <input type="file" id="file-input" class="hidden" accept="video/*,image/*">
                 </div>
             </div>
 
             <!-- PROCESSING SECTION -->
             <div id="processing-section" class="hidden mt-8">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">2. Processing Media...</h3>
+                <h3 class="text-lg sm:text-xl font-semibold mb-4 text-center text-gray-300">2. Processing Media...</h3>
                 <div class="processing-bar w-full h-8 mb-4">
                     <div id="progress-fill" class="progress-fill text-xs text-white flex justify-center items-center font-bold" style="width: 0%">
                         0%
@@ -175,7 +198,7 @@
             
             <!-- AI CAPTION GENERATOR SECTION -->
             <div id="ai-caption-section" class="mt-8 pt-6 border-t border-gray-700">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300 flex items-center justify-center">
+                <h3 class="text-lg sm:text-xl font-semibold mb-4 text-center text-gray-300 flex items-center justify-center">
                     <i data-lucide="sparkles" class="w-5 h-5 text-yellow-400 mr-2"></i> 
                     AI Caption Generator
                 </h3>
@@ -183,6 +206,7 @@
                 
                 <textarea id="ai-prompt-input" rows="3" class="w-full p-3 rounded-lg input-dark focus:ring-2 focus:ring-cyan-500 resize-none" placeholder="Describe your video/image content (e.g., 'A cat jumping into a box in slow motion')"></textarea>
 
+                <!-- Button group stacking on mobile (default flex-col) and side-by-side on sm screens and up -->
                 <div class="flex flex-col sm:flex-row gap-4 mt-4">
                     <button id="generate-caption-button" class="btn-primary flex-1 flex items-center justify-center">
                         <span id="caption-spinner" class="hidden loading-ring mr-2"></span>
@@ -201,7 +225,6 @@
 
             <!-- ******************************************************************* -->
             <!-- 2. ADVERTISEMENT SLOT - FOOTER BANNER -->
-            <!-- Your provided ad code integrated here. -->
             <div class="ad-container overflow-hidden">
                 <script type="text/javascript">
                     atOptions = {
@@ -218,6 +241,7 @@
 
             <!-- Upload Button (for mobile interaction, always visible under the content) -->
             <div class="mt-6 text-center">
+                <!-- Ensure this button is responsive and visible for touch interaction -->
                 <button id="upload-button" class="btn-primary w-full max-w-xs" onclick="document.getElementById('file-input').click()">
                     Select File
                 </button>
@@ -278,7 +302,7 @@
         const showStatusMessage = (message, type = 'info') => {
             statusContainer.innerHTML = ''; 
             const messageDiv = document.createElement('div');
-            messageDiv.classList.add('text-center', 'font-semibold', 'p-4', 'rounded-xl', 'mb-4', 'shadow-lg');
+            messageDiv.classList.add('text-center', 'font-semibold', 'p-4', 'rounded-xl', 'mb-4', 'shadow-lg', 'text-sm');
 
             if (type === 'error') {
                 messageDiv.classList.add('error-message');
@@ -334,6 +358,7 @@
                 processingSection.classList.remove('hidden');
             } else if (showSectionId === 'results') {
                 resultsSection.classList.remove('hidden');
+                uploadButton.classList.remove('hidden'); // Keep upload button visible to start a new job
             }
         };
 
@@ -344,7 +369,8 @@
             if (isProcessing) return;
             isProcessing = true;
             setUIMode('processing');
-            resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>'; // Reset results
+            // Clear and reset results section
+            resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>'; 
 
             if (file.type.startsWith('image/')) {
                  showStatusMessage('Image detected! Performing fast client-side optimization.', 'info');
@@ -541,6 +567,7 @@
                 captionSpinner.classList.add('hidden');
                 magicWandIcon.classList.remove('hidden');
                 generateCaptionButton.disabled = false;
+                isGeneratingAI = false;
             }
 
             // Display results
@@ -550,9 +577,13 @@
                 captions.forEach((caption, index) => {
                     const captionDiv = document.createElement('div');
                     captionDiv.classList.add('ai-result-card', 'p-3', 'rounded-lg', 'text-gray-200', 'text-sm', 'break-words', 'flex', 'items-center', 'justify-between');
+                    
+                    // Remove leading numbering/bullets if present
+                    const cleanCaption = caption.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').trim();
+
                     captionDiv.innerHTML = `
                         <span class="mr-2 font-bold text-cyan-400">${index + 1}.</span>
-                        <span class="flex-grow">${caption.replace(/^\d+\.\s*/, '')}</span>
+                        <span class="flex-grow">${cleanCaption}</span>
                         <button class="copy-btn ml-3 p-1 rounded-md bg-pink-600 hover:bg-pink-500 transition duration-200" title="Copy">
                             <i data-lucide="copy" class="w-4 h-4 text-white"></i>
                         </button>
