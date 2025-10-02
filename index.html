@@ -219,7 +219,8 @@
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
         // 🚨 CRITICAL: Replace this with your actual Gemini API Key to enable captions.
         const API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
-        const UPLOAD_TIMEOUT_MS = 30000; // 30 seconds for upload
+        // 🚨 INCREASED: Upload timeout increased to 60 seconds for mobile networks.
+        const UPLOAD_TIMEOUT_MS = 60000; 
         const TOTAL_PROCESS_TIMEOUT_MS = 300000; // 5 minutes for total processing
 
         // --- UI Elements ---
@@ -346,20 +347,20 @@
                         }
                     } else {
                         // Attempt to parse server error response if available
-                        let errorDetail = xhr.responseText.substring(0, 100);
+                        let errorDetail = xhr.responseText.substring(0, 300); // Increased error detail size
                         if (errorDetail.includes('<') || errorDetail.includes('>')) {
-                             errorDetail = "No detailed server error message available.";
+                             errorDetail = "No detailed server error message available. (Check Cloud Run Logs for more details)";
                         }
-                        reject(new Error(`Upload failed. Status: ${xhr.status}. Server Error: ${errorDetail}`));
+                        reject(new Error(`Upload failed. HTTP Status: ${xhr.status}. Server response snippet: ${errorDetail}`));
                     }
                 };
 
                 xhr.ontimeout = () => {
-                    reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000} seconds. Check your internet connection or server capacity.`));
+                    reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000} seconds. Your internet connection may be slow or the server might be overloaded. Please try again.`));
                 };
 
                 xhr.onerror = () => {
-                    reject(new Error("Network error occurred during upload. Check your connection or CORS configuration on the server."));
+                    reject(new Error("Network error occurred during upload. Check your connection or CORS/firewall configuration on the server."));
                 };
 
                 xhr.send(formData);
@@ -403,12 +404,14 @@
 
                 // 1. UPLOAD STAGE (Using XHR for progress)
                 const uploadPromise = uploadFileWithProgress(file);
+                // Use Promise.race to enforce upload timeout
                 const uploadData = await Promise.race([uploadPromise, overallProcessTimeout]);
                 
-                clearTimeout(timeoutId); // Clear upload stage timeout
+                // If upload is successful, clear the overall process timeout, and reset it later
+                clearTimeout(timeoutId); 
 
                 const fileId = uploadData.fileId;
-                updateProgress(20, `File uploaded. Starting server-side FFmpeg compression...`);
+                updateProgress(20, `File uploaded successfully. Starting server-side FFmpeg compression...`);
                 
                 // 2. PROCESS STAGE
                 const processResponse = await fetch(`${OPTIMIZER_API_URL}/process`, {
@@ -430,6 +433,11 @@
                 const pollInterval = 5000; 
                 let attempts = 0;
                 
+                // Re-establish overall process timeout for polling stage
+                const pollingTimeoutId = setTimeout(() => {
+                    throw new Error("Job polling timed out. The server took too long to respond.");
+                }, TOTAL_PROCESS_TIMEOUT_MS);
+
                 const pollingPromise = new Promise(async (resolve, reject) => {
                     while (!jobComplete && attempts < (TOTAL_PROCESS_TIMEOUT_MS / pollInterval)) { 
                         attempts++;
@@ -455,13 +463,14 @@
                             updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
                         }
                     }
+                    // This case is theoretically covered by pollingTimeoutId, but good for completeness
                     if (!jobComplete) {
-                         reject(new Error("Job polling timed out. The server took too long to respond.")); 
+                         reject(new Error("Job polling loop finished without completion. Timeout occurred or internal error.")); 
                     }
                 });
 
-                await Promise.race([pollingPromise, overallProcessTimeout]);
-                clearTimeout(timeoutId); // Clear total process timeout
+                await pollingPromise;
+                clearTimeout(pollingTimeoutId); 
 
                 updateProgress(100, 'All segments successfully optimized!');
                 
@@ -475,7 +484,8 @@
                 }
 
             } catch (error) {
-                clearTimeout(timeoutId);
+                // Clear any remaining timeouts
+                clearTimeout(timeoutId); 
                 console.error("Compression Error:", error);
                 updateProgress(0, 'Failed.'); 
                 showStatusMessage(error.message || "An unknown error occurred during video compression. Check if the Cloud Run service is active and publicly accessible.", 'error');
