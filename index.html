@@ -1,695 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatusMantra AI - Ultra HD Optimizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        :root {
-            --color-primary: #06b6d4; /* Teal/Cyan */
-            --color-secondary: #db2777; /* Magenta/Pink */
-            --color-bg-dark: #1f2937; /* Dark Gray */
-            --color-text-light: #f3f4f6; /* Off White */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--color-bg-dark);
-            color: var(--color-text-light);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .app-header {
-            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-            color: white;
-        }
-        .card {
-            background-color: #2e3b4a; /* Slightly lighter than background for depth */
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .drop-zone {
-            border: 2px dashed var(--color-primary);
-            border-radius: 1rem;
-            transition: all 0.3s ease;
-        }
-        .drop-zone.drag-over {
-            background-color: rgba(6, 182, 212, 0.1);
-            border-color: var(--color-secondary);
-        }
-        .btn-primary {
-            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: 700;
-            transition: transform 0.2s, opacity 0.2s;
-        }
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.5);
-        }
-        .btn-primary:disabled {
-             opacity: 0.5;
-             cursor: not-allowed;
-        }
-        .error-message {
-            background-color: #451b2f; /* Darkened error background */
-            color: #fca5a5; /* Light red text */
-            border: 1px solid #dc2626;
-        }
-        .info-message {
-            background-color: #1e3a8a; /* Dark blue info */
-            color: #93c5fd; /* Light blue text */
-            border: 1px solid #3b82f6;
-        }
-        .processing-bar {
-            background-color: #4b5563;
-            border-radius: 0.5rem;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-            border-radius: 0.5rem;
-            transition: width 0.3s ease-in-out;
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
-        }
-        .footer-bar {
-            background-color: #111827;
-            color: #6b7280;
-        }
-        .ai-result-card {
-            background-color: #111827;
-            border: 1px solid var(--color-primary);
-        }
-        .input-dark {
-            background-color: #111827;
-            color: var(--color-text-light);
-            border: 1px solid #4b5563;
-        }
-        
-        /* Custom Ad Container for better centering and responsiveness */
-        .ad-container {
-            margin: 2rem auto;
-            max-width: 468px; 
-            height: 60px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatusMantra AI - Ultra HD Optimizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --color-primary: #06b6d4; /* Teal/Cyan */
+            --color-secondary: #db2777; /* Magenta/Pink */
+            --color-bg-dark: #1f2937; /* Dark Gray */
+            --color-text-light: #f3f4f6; /* Off White */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .app-header {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+        }
+        .card {
+            background-color: #2e3b4a; /* Slightly lighter than background for depth */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .drop-zone {
+            border: 2px dashed var(--color-primary);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(6, 182, 212, 0.1);
+            border-color: var(--color-secondary);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.5);
+        }
+        .btn-primary:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
+        }
+        .error-message {
+            background-color: #451b2f; /* Darkened error background */
+            color: #fca5a5; /* Light red text */
+            border: 1px solid #dc2626;
+        }
+        .info-message {
+            background-color: #1e3a8a; /* Dark blue info */
+            color: #93c5fd; /* Light blue text */
+            border: 1px solid #3b82f6;
+        }
+        .processing-bar {
+            background-color: #4b5563;
+            border-radius: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            border-radius: 0.5rem;
+            transition: width 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        .footer-bar {
+            background-color: #111827;
+            color: #6b7280;
+        }
+        .ai-result-card {
+            background-color: #111827;
+            border: 1px solid var(--color-primary);
+        }
+        .input-dark {
+            background-color: #111827;
+            color: var(--color-text-light);
+            border: 1px solid #4b5563;
+        }
+        
+        /* Custom Ad Container for better centering and responsiveness */
+        .ad-container {
+            margin: 2rem auto;
+            max-width: 468px; 
+            height: 60px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
 
-        /* NEW: CSS for the Loading Spinner (used in AI Caption Generator) */
-        .loading-ring {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f4f6;
-            border-radius: 50%;
-            border-top-color: var(--color-secondary);
-            animation: spin 1s ease-in-out infinite;
-            -webkit-animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { -webkit-transform: rotate(360deg); }
-        }
-        @-webkit-keyframes spin {
-            to { -webkit-transform: rotate(360deg); }
-        }
-    </style>
+        /* NEW: CSS for the Loading Spinner (used in AI Caption Generator) */
+        .loading-ring {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: var(--color-secondary);
+            animation: spin 1s ease-in-out infinite;
+            -webkit-animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { -webkit-transform: rotate(360deg); }
+        }
+        @-webkit-keyframes spin {
+            to { -webkit-transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="flex flex-col items-center">
 
-    <header class="app-header w-full shadow-2xl">
-        <div class="max-w-4xl mx-auto p-4 flex justify-between items-center">
-            <h1 class="text-3xl font-black tracking-widest">STATUS<span class="text-gray-200 font-light">MANTRA</span></h1>
-            <span class="text-sm font-light opacity-80">AI Optimized Media</span>
-        </div>
-    </header>
+    <header class="app-header w-full shadow-2xl">
+        <div class="max-w-4xl mx-auto p-4 flex justify-between items-center">
+            <h1 class="text-3xl font-black tracking-widest">STATUS<span class="text-gray-200 font-light">MANTRA</span></h1>
+            <span class="text-sm font-light opacity-80">AI Optimized Media</span>
+        </div>
+    </header>
 
-    <main class="w-full max-w-4xl p-4 flex-grow">
-        <div id="app-container" class="card p-6 md:p-10 my-8 w-full space-y-8">
+    <main class="w-full max-w-4xl p-4 flex-grow">
+        <div id="app-container" class="card p-6 md:p-10 my-8 w-full space-y-8">
 
-            <h2 class="text-4xl font-extrabold text-center tracking-tighter">
-                One-Click <span class="app-header bg-clip-text text-transparent">AI Media Optimization</span>
-            </h2>
+            <h2 class="text-4xl font-extrabold text-center tracking-tighter">
+                One-Click <span class="app-header bg-clip-text text-transparent">AI Media Optimization</span>
+            </h2>
 
-            <div id="status-message-container" class="mb-6">
-                </div>
+            <div id="status-message-container" class="mb-6">
+                </div>
 
-            <div class="ad-container overflow-hidden">
-                <p class="text-xs text-gray-500">Ad Placeholder (External script blocked)</p>
-            </div>
-            <div id="upload-section">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">Upload File (Video or Image)</h3>
-                <div id="drop-zone" class="drop-zone p-8 text-center cursor-pointer transition-all">
-                    <i data-lucide="video" class="w-12 h-12 text-teal-400 mx-auto mb-3"></i>
-                    <p class="text-2xl font-bold mb-1 text-gray-100">Drop Video or Image Here</p>
-                    <p class="text-gray-400">or click to select file (Max size 100MB recommended)</p>
-                    <input type="file" id="file-input" class="hidden" accept="video/*,image/*" capture="filesystem">
-                </div>
-            </div>
+            <div class="ad-container overflow-hidden">
+                <p class="text-xs text-gray-500">Ad Placeholder (External script blocked)</p>
+            </div>
+            <div id="upload-section">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">Upload File (Video or Image)</h3>
+                <div id="drop-zone" class="drop-zone p-8 text-center cursor-pointer transition-all">
+                    <i data-lucide="video" class="w-12 h-12 text-teal-400 mx-auto mb-3"></i>
+                    <p class="text-2xl font-bold mb-1 text-gray-100">Drop Video or Image Here</p>
+                    <p class="text-gray-400">or click to select file (Max size 100MB recommended)</p>
+                    <input type="file" id="file-input" class="hidden" accept="video/*,image/*" capture="filesystem">
+                </div>
+            </div>
 
-            <div id="processing-section" class="hidden mt-8">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">2. Processing Media...</h3>
-                <div class="processing-bar w-full h-8 mb-4">
-                    <div id="progress-fill" class="progress-fill text-xs text-white flex justify-center items-center font-bold" style="width: 0%">
-                        0%
-                    </div>
-                </div>
-                <p id="processing-status" class="text-center text-sm text-gray-400">
-                    Initializing compression pipeline...
-                </p>
-            </div>
+            <div id="processing-section" class="hidden mt-8">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300">2. Processing Media...</h3>
+                <div class="processing-bar w-full h-8 mb-4">
+                    <div id="progress-fill" class="progress-fill text-xs text-white flex justify-center items-center font-bold" style="width: 0%">
+                        0%
+                    </div>
+                </div>
+                <p id="processing-status" class="text-center text-sm text-gray-400">
+                    Initializing compression pipeline...
+                </p>
+            </div>
 
-            <div id="results-section" class="hidden mt-8 space-y-4">
-                <h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3>
-                <p class="text-center text-gray-400">Your optimized segments are ready for download.</p>
-                </div>
-            
-            <div id="ai-caption-section" class="mt-8 pt-6 border-t border-gray-700">
-                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300 flex items-center justify-center">
-                    <i data-lucide="sparkles" class="w-5 h-5 text-yellow-400 mr-2"></i> 
-                    AI Caption Generator
-                </h3>
-                <p class="text-center text-sm text-gray-400 mb-4">Generate catchy captions for your optimized content using Gemini AI.</p>
-                
-                <textarea id="ai-prompt-input" rows="3" class="w-full p-3 rounded-lg input-dark focus:ring-2 focus:ring-cyan-500 resize-none" placeholder="Describe your video/image content (e.g., 'A cat jumping into a box in slow motion')"></textarea>
+            <div id="results-section" class="hidden mt-8 space-y-4">
+                <h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3>
+                <p class="text-center text-gray-400">Your optimized segments are ready for download.</p>
+                </div>
+            
+            <div id="ai-caption-section" class="mt-8 pt-6 border-t border-gray-700">
+                <h3 class="text-xl font-semibold mb-4 text-center text-gray-300 flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-yellow-400 mr-2"></i> 
+                    AI Caption Generator
+                </h3>
+                <p class="text-center text-sm text-gray-400 mb-4">Generate catchy captions for your optimized content using Gemini AI.</p>
+                
+                <textarea id="ai-prompt-input" rows="3" class="w-full p-3 rounded-lg input-dark focus:ring-2 focus:ring-cyan-500 resize-none" placeholder="Describe your video/image content (e.g., 'A cat jumping into a box in slow motion')"></textarea>
 
-                <div class="flex flex-col sm:flex-row gap-4 mt-4">
-                    <button id="generate-caption-button" class="btn-primary flex-1 flex items-center justify-center">
-                        <span id="caption-spinner" class="hidden loading-ring mr-2"></span>
-                        <i data-lucide="magic-wand" class="w-5 h-5 mr-2" id="magic-wand-icon"></i> 
-                        Generate 3 Status Captions
-                    </button>
-                    <button id="clear-captions-button" class="btn-primary flex-1 opacity-70 hover:opacity-100 transition duration-200" style="background: #374151;" >
-                        Clear Results
-                    </button>
-                </div>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button id="generate-caption-button" class="btn-primary flex-1 flex items-center justify-center">
+                        <span id="caption-spinner" class="hidden loading-ring mr-2"></span>
+                        <i data-lucide="magic-wand" class="w-5 h-5 mr-2" id="magic-wand-icon"></i> 
+                        Generate 3 Status Captions
+                    </button>
+                    <button id="clear-captions-button" class="btn-primary flex-1 opacity-70 hover:opacity-100 transition duration-200" style="background: #374151;" >
+                        Clear Results
+                    </button>
+                </div>
 
-                <div id="ai-results" class="mt-6 space-y-3">
-                    </div>
-            </div>
+                <div id="ai-results" class="mt-6 space-y-3">
+                    </div>
+            </div>
 
-            <div class="ad-container overflow-hidden">
-                 <p class="text-xs text-gray-500">Ad Placeholder (External script blocked)</p>
-            </div>
-            <div class="mt-6 text-center">
-                <button id="upload-button" class="btn-primary w-full max-w-xs" onclick="document.getElementById('file-input').click()">
-                    Select File
-                </button>
-            </div>
-            
-        </div>
-    </main>
+            <div class="ad-container overflow-hidden">
+                 <p class="text-xs text-gray-500">Ad Placeholder (External script blocked)</p>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="upload-button" class="btn-primary w-full max-w-xs" onclick="document.getElementById('file-input').click()">
+                    Select File
+                </button>
+            </div>
+            
+        </div>
+    </main>
 
-    <footer class="footer-bar w-full p-3 text-center text-sm mt-auto">
-        &copy; 2024 NancySocialSolutions. All rights reserved.
-    </footer>
+    <footer class="footer-bar w-full p-3 text-center text-sm mt-auto">
+        &copy; 2024 NancySocialSolutions. All rights reserved.
+    </footer>
 
-    <script type="module">
-        // --- Configuration ---
-        // 🚨 CRITICAL: Using the confirmed, deployed Cloud Run URL from your screenshot.
-        const OPTIMIZER_API_URL = 'https://status-optimizer-service-420017097259.us-central1.run.app'; 
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
-        // 🚨 CRITICAL: Replace this with your actual Gemini API Key to enable captions.
-        const API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
-        // 🚨 INCREASED: Upload timeout increased to 60 seconds for mobile networks.
-        const UPLOAD_TIMEOUT_MS = 60000; 
-        const TOTAL_PROCESS_TIMEOUT_MS = 300000; // 5 minutes for total processing
+    <script type="module">
+        // --- Configuration ---
+        // 🚨 CRITICAL FIX APPLIED: Using the confirmed, working Cloud Run URL in the asia-south1 region.
+        const OPTIMIZER_API_URL = 'https://status-optimizer-service-420017097259.asia-south1.run.app'; 
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
+        // 🚨 CRITICAL: Replace this with your actual Gemini API Key to enable captions.
+        const API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+        // 🚨 INCREASED: Upload timeout increased to 60 seconds for mobile networks.
+        const UPLOAD_TIMEOUT_MS = 60000; 
+        const TOTAL_PROCESS_TIMEOUT_MS = 300000; // 5 minutes for total processing
 
-        // --- UI Elements ---
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const uploadButton = document.getElementById('upload-button');
-        const uploadSection = document.getElementById('upload-section');
-        const processingSection = document.getElementById('processing-section');
-        const resultsSection = document.getElementById('results-section');
-        const progressFill = document.getElementById('progress-fill');
-        const processingStatus = document.getElementById('processing-status');
-        const statusContainer = document.getElementById('status-message-container');
-        
-        // AI Elements
-        const aiPromptInput = document.getElementById('ai-prompt-input');
-        const generateCaptionButton = document.getElementById('generate-caption-button');
-        const aiResultsContainer = document.getElementById('ai-results');
-        const captionSpinner = document.getElementById('caption-spinner');
-        const magicWandIcon = document.getElementById('magic-wand-icon');
-        const clearCaptionsButton = document.getElementById('clear-captions-button'); 
+        // --- UI Elements ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const uploadSection = document.getElementById('upload-section');
+        const processingSection = document.getElementById('processing-section');
+        const resultsSection = document.getElementById('results-section');
+        const progressFill = document.getElementById('progress-fill');
+        const processingStatus = document.getElementById('processing-status');
+        const statusContainer = document.getElementById('status-message-container');
+        
+        // AI Elements
+        const aiPromptInput = document.getElementById('ai-prompt-input');
+        const generateCaptionButton = document.getElementById('generate-caption-button');
+        const aiResultsContainer = document.getElementById('ai-results');
+        const captionSpinner = document.getElementById('caption-spinner');
+        const magicWandIcon = document.getElementById('magic-wand-icon');
+        const clearCaptionsButton = document.getElementById('clear-captions-button'); 
 
-        // Initialize icons
-        lucide.createIcons();
+        // Initialize icons
+        lucide.createIcons();
 
-        // --- State Management ---
-        let isProcessing = false;
-        let isGeneratingAI = false;
+        // --- State Management ---
+        let isProcessing = false;
+        let isGeneratingAI = false;
 
-        // --- Utility Functions ---
+        // --- Utility Functions ---
 
-        const formatFileSize = (bytes) => {
-            if (bytes === 0) return '0 Bytes';
-            const megabytes = bytes / (1024 * 1024);
-            return `${megabytes.toFixed(2)} MB`;
-        };
+        const formatFileSize = (bytes) => {
+            if (bytes === 0) return '0 Bytes';
+            const megabytes = bytes / (1024 * 1024);
+            return `${megabytes.toFixed(2)} MB`;
+        };
 
-        const showStatusMessage = (message, type = 'info') => {
-            statusContainer.innerHTML = ''; 
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('text-center', 'font-semibold', 'p-4', 'rounded-xl', 'mb-4', 'shadow-lg');
+        const showStatusMessage = (message, type = 'info') => {
+            statusContainer.innerHTML = ''; 
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('text-center', 'font-semibold', 'p-4', 'rounded-xl', 'mb-4', 'shadow-lg');
 
-            if (type === 'error') {
-                messageDiv.classList.add('error-message');
-                messageDiv.innerHTML = `<p><span class="inline-flex items-center"><i data-lucide="alert-triangle" class="w-5 h-5 inline mr-2 text-red-400"></i> **Error:** ${message}</span></p>`;
-            } else {
-                messageDiv.classList.add('info-message');
-                messageDiv.innerHTML = `<p><span class="inline-flex items-center"><i data-lucide="info" class="w-5 h-5 inline mr-2 text-blue-400"></i> ${message}</span></p>`;
-            }
-            statusContainer.appendChild(messageDiv);
-            lucide.createIcons();
-        };
-        
-        const renderDownloadCard = (segment, index) => {
-            const card = document.createElement('div');
-            card.classList.add('card', 'p-4', 'flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'border', 'border-cyan-500', 'shadow-xl');
-            
-            const isPlaceholder = segment.url === '#';
-            const fileTitle = segment.fileName || `Optimized_Segment_${index + 1}.mp4`;
-            
-            card.innerHTML = `
-                <div class="mb-4 md:mb-0 md:mr-6 text-center md:text-left">
-                    <p class="font-bold text-gray-100 break-words">${fileTitle}</p>
-                    <p class="text-sm text-gray-400">Size: ${formatFileSize(segment.size)}</p>
-                </div>
-                <a href="${segment.url}" download="${fileTitle}" class="btn-primary text-center w-full md:w-auto mt-2 md:mt-0 ${isPlaceholder ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <i data-lucide="download" class="w-4 h-4 inline mr-2"></i> Download File
-                </a>
-            `;
-            resultsSection.appendChild(card);
-            lucide.createIcons();
-        };
+            if (type === 'error') {
+                messageDiv.classList.add('error-message');
+                messageDiv.innerHTML = `<p><span class="inline-flex items-center"><i data-lucide="alert-triangle" class="w-5 h-5 inline mr-2 text-red-400"></i> **Error:** ${message}</span></p>`;
+            } else {
+                messageDiv.classList.add('info-message');
+                messageDiv.innerHTML = `<p><span class="inline-flex items-center"><i data-lucide="info" class="w-5 h-5 inline mr-2 text-blue-400"></i> ${message}</span></p>`;
+            }
+            statusContainer.appendChild(messageDiv);
+            lucide.createIcons();
+        };
+        
+        const renderDownloadCard = (segment, index) => {
+            const card = document.createElement('div');
+            card.classList.add('card', 'p-4', 'flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'border', 'border-cyan-500', 'shadow-xl');
+            
+            const isPlaceholder = segment.url === '#';
+            const fileTitle = segment.fileName || `Optimized_Segment_${index + 1}.mp4`;
+            
+            card.innerHTML = `
+                <div class="mb-4 md:mb-0 md:mr-6 text-center md:text-left">
+                    <p class="font-bold text-gray-100 break-words">${fileTitle}</p>
+                    <p class="text-sm text-gray-400">Size: ${formatFileSize(segment.size)}</p>
+                </div>
+                <a href="${segment.url}" download="${fileTitle}" class="btn-primary text-center w-full md:w-auto mt-2 md:mt-0 ${isPlaceholder ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i data-lucide="download" class="w-4 h-4 inline mr-2"></i> Download File
+                </a>
+            `;
+            resultsSection.appendChild(card);
+            lucide.createIcons();
+        };
 
-        const updateProgress = (percent, statusText) => {
-            const width = Math.min(100, Math.max(0, percent));
-            progressFill.style.width = `${width}%`;
-            progressFill.textContent = `${Math.round(width)}%`;
-            processingStatus.textContent = statusText;
-        };
+        const updateProgress = (percent, statusText) => {
+            const width = Math.min(100, Math.max(0, percent));
+            progressFill.style.width = `${width}%`;
+            progressFill.textContent = `${Math.round(width)}%`;
+            processingStatus.textContent = statusText;
+        };
 
-        const setUIMode = (showSectionId) => {
-            uploadSection.classList.add('hidden');
-            processingSection.classList.add('hidden');
-            resultsSection.classList.add('hidden');
-            uploadButton.classList.add('hidden');
-            statusContainer.innerHTML = ''; 
+        const setUIMode = (showSectionId) => {
+            uploadSection.classList.add('hidden');
+            processingSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            uploadButton.classList.add('hidden');
+            statusContainer.innerHTML = ''; 
 
-            if (showSectionId === 'upload') {
-                uploadSection.classList.remove('hidden');
-                uploadButton.classList.remove('hidden');
-                resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>';
-            } else if (showSectionId === 'processing') {
-                processingSection.classList.remove('hidden');
-            } else if (showSectionId === 'results') {
-                resultsSection.classList.remove('hidden');
-                uploadButton.classList.remove('hidden'); 
-            }
-        };
+            if (showSectionId === 'upload') {
+                uploadSection.classList.remove('hidden');
+                uploadButton.classList.remove('hidden');
+                resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>';
+            } else if (showSectionId === 'processing') {
+                processingSection.classList.remove('hidden');
+            } else if (showSectionId === 'results') {
+                resultsSection.classList.remove('hidden');
+                uploadButton.classList.remove('hidden'); 
+            }
+        };
 
-        // --- Core Logic (Video/Image Optimization) ---
-        
-        /** Uploads file using XMLHttpRequest for progress tracking and returns a Promise. */
-        const uploadFileWithProgress = (file) => {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                const formData = new FormData();
-                formData.append('file', file);
+        // --- Core Logic (Video/Image Optimization) ---
+        
+        /** Uploads file using XMLHttpRequest for progress tracking and returns a Promise. */
+        const uploadFileWithProgress = (file) => {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append('file', file);
 
-                xhr.open('POST', `${OPTIMIZER_API_URL}/upload`);
-                xhr.timeout = UPLOAD_TIMEOUT_MS;
+                // 🚨 CRITICAL FIX APPLIED: Changed /upload to /optimize
+                xhr.open('POST', `${OPTIMIZER_API_URL}/optimize`);
+                xhr.timeout = UPLOAD_TIMEOUT_MS;
 
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const percent = (e.loaded / e.total) * 20; // 0% to 20% is upload
-                        updateProgress(percent, `Uploading ${file.name} (${formatFileSize(e.total)})...`);
-                    }
-                });
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 20; // 0% to 20% is upload
+                        updateProgress(percent, `Uploading ${file.name} (${formatFileSize(e.total)})...`);
+                    }
+                });
 
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            resolve(JSON.parse(xhr.responseText));
-                        } catch (e) {
-                            reject(new Error("Server returned an invalid JSON response after upload."));
-                        }
-                    } else {
-                        // Attempt to parse server error response if available
-                        let errorDetail = xhr.responseText.substring(0, 300); // Increased error detail size
-                        if (errorDetail.includes('<') || errorDetail.includes('>')) {
-                             errorDetail = "No detailed server error message available. (Check Cloud Run Logs for more details)";
-                        }
-                        reject(new Error(`Upload failed. HTTP Status: ${xhr.status}. Server response snippet: ${errorDetail}`));
-                    }
-                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText));
+                        } catch (e) {
+                            reject(new Error("Server returned an invalid JSON response after upload."));
+                        }
+                    } else {
+                        // Attempt to parse server error response if available
+                        let errorDetail = xhr.responseText.substring(0, 300); // Increased error detail size
+                        if (errorDetail.includes('<') || errorDetail.includes('>')) {
+                             errorDetail = "No detailed server error message available. (Check Cloud Run Logs for more details)";
+                        }
+                        reject(new Error(`Upload failed. HTTP Status: ${xhr.status}. Server response snippet: ${errorDetail}`));
+                    }
+                };
 
-                xhr.ontimeout = () => {
-                    reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000} seconds. Your internet connection may be slow or the server might be overloaded. Please try again.`));
-                };
+                xhr.ontimeout = () => {
+                    reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000} seconds. Your internet connection may be slow or the server might be overloaded. Please try again.`));
+                };
 
-                xhr.onerror = () => {
-                    reject(new Error("Network error occurred during upload. Check your connection or CORS/firewall configuration on the server."));
-                };
+                xhr.onerror = () => {
+                    reject(new Error("Network error occurred during upload. Check your connection or CORS/firewall configuration on the server."));
+                };
 
-                xhr.send(formData);
-            });
-        };
-
-
-        /** Handles the file upload and initiates the compression process. */
-        const startCompression = async (file) => {
-            if (isProcessing) return;
-            isProcessing = true;
-            setUIMode('processing');
-            
-            resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>';
-
-            if (file.type.startsWith('image/')) {
-                showStatusMessage('Image detected! Performing fast client-side optimization.', 'info');
-                updateProgress(10, 'Processing image locally...');
-                await processImageClientSide(file);
-                isProcessing = false;
-                return;
-            } else if (!file.type.startsWith('video/')) {
-                showStatusMessage('Unsupported file type. Please upload a video or image file.', 'error');
-                setUIMode('upload');
-                isProcessing = false;
-                return;
-            }
-
-            // --- Video Processing (Server-Side via Cloud Run API) ---
-            showStatusMessage('Video file detected. Using deployed Cloud Run API for processing...', 'info');
-
-            let timeoutId;
-            try {
-                // Set overall processing timeout
-                const overallProcessTimeout = new Promise((_, reject) => {
-                    timeoutId = setTimeout(() => {
-                        reject(new Error(`Total processing timed out after ${TOTAL_PROCESS_TIMEOUT_MS / 60000} minutes. The server is taking too long.`));
-                    }, TOTAL_PROCESS_TIMEOUT_MS);
-                });
+                xhr.send(formData);
+            });
+        };
 
 
-                // 1. UPLOAD STAGE (Using XHR for progress)
-                const uploadPromise = uploadFileWithProgress(file);
-                // Use Promise.race to enforce upload timeout
-                const uploadData = await Promise.race([uploadPromise, overallProcessTimeout]);
-                
-                // If upload is successful, clear the overall process timeout, and reset it later
-                clearTimeout(timeoutId); 
+        /** Handles the file upload and initiates the compression process. */
+        const startCompression = async (file) => {
+            if (isProcessing) return;
+            isProcessing = true;
+            setUIMode('processing');
+            
+            resultsSection.innerHTML = '<h3 class="text-xl font-semibold text-center text-teal-400">3. Optimization Complete!</h3><p class="text-center text-gray-400">Your optimized segments are ready for download.</p>';
 
-                const fileId = uploadData.fileId;
-                updateProgress(20, `File uploaded successfully. Starting server-side FFmpeg compression...`);
-                
-                // 2. PROCESS STAGE
-                const processResponse = await fetch(`${OPTIMIZER_API_URL}/process`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileId: fileId })
-                });
-                if (!processResponse.ok) {  
-                     const errorText = await processResponse.text().catch(() => 'No response body.');
-                     throw new Error(`Processing initiation failed. Status: ${processResponse.status}. Details: ${errorText.substring(0, 100)}`);
-                }
-                const processData = await processResponse.json();
-                const jobId = processData.jobId;
-                updateProgress(40, `Compression job started (ID: ${jobId}). Waiting for results...`);
+            if (file.type.startsWith('image/')) {
+                showStatusMessage('Image detected! Performing fast client-side optimization.', 'info');
+                updateProgress(10, 'Processing image locally...');
+                await processImageClientSide(file);
+                isProcessing = false;
+                return;
+            } else if (!file.type.startsWith('video/')) {
+                showStatusMessage('Unsupported file type. Please upload a video or image file.', 'error');
+                setUIMode('upload');
+                isProcessing = false;
+                return;
+            }
 
-                // 3. POLLING STAGE (Wait for job to complete)
-                let jobComplete = false;
-                let finalResult = null;
-                const pollInterval = 5000; 
-                let attempts = 0;
-                
-                // Re-establish overall process timeout for polling stage
-                const pollingTimeoutId = setTimeout(() => {
-                    throw new Error("Job polling timed out. The server took too long to respond.");
-                }, TOTAL_PROCESS_TIMEOUT_MS);
+            // --- Video Processing (Server-Side via Cloud Run API) ---
+            showStatusMessage('Video file detected. Using deployed Cloud Run API for processing...', 'info');
 
-                const pollingPromise = new Promise(async (resolve, reject) => {
-                    while (!jobComplete && attempts < (TOTAL_PROCESS_TIMEOUT_MS / pollInterval)) { 
-                        attempts++;
-                        await new Promise(r => setTimeout(r, pollInterval));
-                        
-                        const statusResponse = await fetch(`${OPTIMIZER_API_URL}/status?jobId=${jobId}`);
-                        
-                        if (!statusResponse.ok) {
-                            console.error("Status check failed. Retrying...");
-                            updateProgress(40 + (attempts * 0.9), `Server Status Check Failed (Attempt ${attempts}). Retrying...`);
-                            continue;
-                        }
-                        const statusData = await statusResponse.json();
-                        
-                        if (statusData.status === 'completed') {
-                            jobComplete = true;
-                            finalResult = statusData;
-                            resolve();
-                        } else if (statusData.status === 'failed') {
-                            reject(new Error(`Video processing failed on the server. Details: ${statusData.error || 'Unknown error.'}`));
-                        } else {
-                            const progress = Math.min(95, 40 + (attempts * 0.9)); 
-                            updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
-                        }
-                    }
-                    // This case is theoretically covered by pollingTimeoutId, but good for completeness
-                    if (!jobComplete) {
-                         reject(new Error("Job polling loop finished without completion. Timeout occurred or internal error.")); 
-                    }
-                });
+            let timeoutId;
+            try {
+                // Set overall processing timeout
+                const overallProcessTimeout = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error(`Total processing timed out after ${TOTAL_PROCESS_TIMEOUT_MS / 60000} minutes. The server is taking too long.`));
+                    }, TOTAL_PROCESS_TIMEOUT_MS);
+                });
 
-                await pollingPromise;
-                clearTimeout(pollingTimeoutId); 
 
-                updateProgress(100, 'All segments successfully optimized!');
-                
-                // 4. DISPLAY RESULTS
-                if (finalResult && finalResult.segments && finalResult.segments.length > 0) {
-                    showStatusMessage(`Success! Video split into ${finalResult.segments.length} optimized 30-second segments.`, 'info');
-                    finalResult.segments.forEach(renderDownloadCard);
-                    setUIMode('results');
-                } else {
-                    throw new Error("Server completed the job but returned no downloadable segments. Check video length or server logs.");
-                }
+                // 1. UPLOAD STAGE (Using XHR for progress)
+                const uploadPromise = uploadFileWithProgress(file);
+                // Use Promise.race to enforce upload timeout
+                const uploadData = await Promise.race([uploadPromise, overallProcessTimeout]);
+                
+                // If upload is successful, clear the overall process timeout, and reset it later
+                clearTimeout(timeoutId); 
 
-            } catch (error) {
-                // Clear any remaining timeouts
-                clearTimeout(timeoutId); 
-                console.error("Compression Error:", error);
-                updateProgress(0, 'Failed.'); 
-                showStatusMessage(error.message || "An unknown error occurred during video compression. Check if the Cloud Run service is active and publicly accessible.", 'error');
-                setUIMode('upload');
-            } finally {
-                isProcessing = false;
-            }
-        };
+                const fileId = uploadData.fileId;
+                updateProgress(20, `File uploaded successfully. Starting server-side FFmpeg compression...`);
+                
+                // 2. PROCESS STAGE
+                // NOTE: We assume /process is the next endpoint, if the backend uses a different flow, this needs adjustment.
+                const processResponse = await fetch(`${OPTIMIZER_API_URL}/process`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileId: fileId })
+                });
+                if (!processResponse.ok) {  
+                     const errorText = await processResponse.text().catch(() => 'No response body.');
+                     throw new Error(`Processing initiation failed. Status: ${processResponse.status}. Details: ${errorText.substring(0, 100)}`);
+                }
+                const processData = await processResponse.json();
+                const jobId = processData.jobId;
+                updateProgress(40, `Compression job started (ID: ${jobId}). Waiting for results...`);
 
-        /** Processes images locally using the Canvas API for compression. */
-        const processImageClientSide = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            updateProgress(30, 'Resizing image...');
-                            const maxWidth = 1920; 
-                            const maxHeight = 1080;
-                            let width = img.width;
-                            let height = img.height;
+                // 3. POLLING STAGE (Wait for job to complete)
+                let jobComplete = false;
+                let finalResult = null;
+                const pollInterval = 5000; 
+                let attempts = 0;
+                
+                // Re-establish overall process timeout for polling stage
+                const pollingTimeoutId = setTimeout(() => {
+                    throw new Error("Job polling timed out. The server took too long to respond.");
+                }, TOTAL_PROCESS_TIMEOUT_MS);
 
-                            if (width > height) {
-                                if (width > maxWidth) {
-                                    height *= maxWidth / width;
-                                    width = maxWidth;
-                                }
-                            } else {
-                                if (height > maxHeight) {
-                                    width *= maxHeight / height;
-                                    height = maxHeight;
-                                }
-                            }
+                const pollingPromise = new Promise(async (resolve, reject) => {
+                    while (!jobComplete && attempts < (TOTAL_PROCESS_TIMEOUT_MS / pollInterval)) { 
+                        attempts++;
+                        await new Promise(r => setTimeout(r, pollInterval));
+                        
+                        const statusResponse = await fetch(`${OPTIMIZER_API_URL}/status?jobId=${jobId}`);
+                        
+                        if (!statusResponse.ok) {
+                            console.error("Status check failed. Retrying...");
+                            updateProgress(40 + (attempts * 0.9), `Server Status Check Failed (Attempt ${attempts}). Retrying...`);
+                            continue;
+                        }
+                        const statusData = await statusResponse.json();
+                        
+                        if (statusData.status === 'completed') {
+                            jobComplete = true;
+                            finalResult = statusData;
+                            resolve();
+                        } else if (statusData.status === 'failed') {
+                            reject(new Error(`Video processing failed on the server. Details: ${statusData.error || 'Unknown error.'}`));
+                        } else {
+                            const progress = Math.min(95, 40 + (attempts * 0.9)); 
+                            updateProgress(progress, `Optimization in progress... (Attempt ${attempts})`);
+                        }
+                    }
+                    // This case is theoretically covered by pollingTimeoutId, but good for completeness
+                    if (!jobComplete) {
+                         reject(new Error("Job polling loop finished without completion. Timeout occurred or internal error.")); 
+                    }
+                });
 
-                            canvas.width = width;
-                            canvas.height = height;
-                            ctx.drawImage(img, 0, 0, width, height);
-                            updateProgress(60, 'Applying JPEG compression...');
-                            
-                            // Compress using JPEG at 80% quality
-                            canvas.toBlob((blob) => {
-                                if (!blob) {
-                                    showStatusMessage("Could not compress image.", 'error');
-                                    setUIMode('upload');
-                                    return resolve();
-                                }
-                                
-                                const originalSize = file.size;
-                                const compressedSize = blob.size;
-                                // This URL (blob URL) is the actual local download link for images.
-                                const compressedUrl = URL.createObjectURL(blob); 
-                                
-                                setUIMode('results');
-                                showStatusMessage(`Image optimization complete! Original Size: ${formatFileSize(originalSize)} | New Size: ${formatFileSize(compressedSize)}`, 'info');
+                await pollingPromise;
+                clearTimeout(pollingTimeoutId); 
 
-                                const segment = {
-                                    fileName: `optimized_${file.name.replace(/\.[^/.]+$/, "")}.jpg`,
-                                    size: compressedSize,
-                                    url: compressedUrl
-                                };
-                                renderDownloadCard(segment, 0);
-                                updateProgress(100, 'Image optimization complete!');
+                updateProgress(100, 'All segments successfully optimized!');
+                
+                // 4. DISPLAY RESULTS
+                if (finalResult && finalResult.segments && finalResult.segments.length > 0) {
+                    showStatusMessage(`Success! Video split into ${finalResult.segments.length} optimized 30-second segments.`, 'info');
+                    finalResult.segments.forEach(renderDownloadCard);
+                    setUIMode('results');
+                } else {
+                    throw new Error("Server completed the job but returned no downloadable segments. Check video length or server logs.");
+                }
 
-                                resolve();
-                            }, 'image/jpeg', 0.8);
+            } catch (error) {
+                // Clear any remaining timeouts
+                clearTimeout(timeoutId); 
+                console.error("Compression Error:", error);
+                updateProgress(0, 'Failed.'); 
+                showStatusMessage(error.message || "An unknown error occurred during video compression. Check if the Cloud Run service is active and publicly accessible.", 'error');
+                setUIMode('upload');
+            } finally {
+                isProcessing = false;
+            }
+        };
 
-                        } catch (e) {
-                            console.error("Image Processing Error:", e);
-                            showStatusMessage("Error processing image in browser.", 'error');
-                            setUIMode('upload');
-                            resolve(); 
-                        }
-                    };
-                    img.src = event.target.result;
-                };
-                reader.onerror = () => {
-                    showStatusMessage("Error reading file.", 'error');
-                    setUIMode('upload');
-                    resolve();
-                };
-                reader.readAsDataURL(file);
-            });
-        };
+        /** Processes images locally using the Canvas API for compression. */
+        const processImageClientSide = (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            updateProgress(30, 'Resizing image...');
+                            const maxWidth = 1920; 
+                            const maxHeight = 1080;
+                            let width = img.width;
+                            let height = img.height;
 
-        // --- AI Caption Generator Logic (Unchanged) ---
+                            if (width > height) {
+                                if (width > maxWidth) {
+                                    height *= maxWidth / width;
+                                    width = maxWidth;
+                                }
+                            } else {
+                                if (height > maxHeight) {
+                                    width *= maxHeight / height;
+                                    height = maxHeight;
+                                }
+                            }
 
-        const generateAICaptions = async () => {
-            if (isGeneratingAI) return;
-            const userPrompt = aiPromptInput.value.trim();
-            
-            if (API_KEY === "YOUR_GEMINI_API_KEY_HERE" || !API_KEY) {
-                showStatusMessage("CRITICAL: Please replace 'YOUR_GEMINI_API_KEY_HERE' in the code with a valid Gemini API Key to use the AI Caption Generator.", 'error');
-                return;
-            }
-            if (!userPrompt) {
-                showStatusMessage("Please describe your video/image content before generating captions.", 'error');
-                return;
-            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            updateProgress(60, 'Applying JPEG compression...');
+                            
+                            // Compress using JPEG at 80% quality
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    showStatusMessage("Could not compress image.", 'error');
+                                    setUIMode('upload');
+                                    return resolve();
+                                }
+                                
+                                const originalSize = file.size;
+                                const compressedSize = blob.size;
+                                // This URL (blob URL) is the actual local download link for images.
+                                const compressedUrl = URL.createObjectURL(blob); 
+                                
+                                setUIMode('results');
+                                showStatusMessage(`Image optimization complete! Original Size: ${formatFileSize(originalSize)} | New Size: ${formatFileSize(compressedSize)}`, 'info');
 
-            isGeneratingAI = true;
-            aiResultsContainer.innerHTML = '';
-            captionSpinner.classList.remove('hidden');
-            magicWandIcon.classList.add('hidden');
-            generateCaptionButton.disabled = true;
+                                const segment = {
+                                    fileName: `optimized_${file.name.replace(/\.[^/.]+$/, "")}.jpg`,
+                                    size: compressedSize,
+                                    url: compressedUrl
+                                };
+                                renderDownloadCard(segment, 0);
+                                updateProgress(100, 'Image optimization complete!');
 
-            const systemPrompt = "You are a creative social media manager specializing in short, viral video captions. Your task is to generate three unique, catchy, and status-ready captions based on the user's content description. Each caption must be distinct and ready to be used on platforms like WhatsApp or Instagram Stories. Format your final output as a numbered list.";
-            const userQuery = `Generate 3 captions for content described as: "${userPrompt}"`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                config: {
-                    systemInstruction: systemPrompt
-                }
-            };
+                                resolve();
+                            }, 'image/jpeg', 0.8);
 
-            let responseText = "Failed to generate captions.";
-            
-            try {
-                for (let i = 0; i < 3; i++) { 
-                    const response = await fetch(GEMINI_API_URL + API_KEY, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                        } catch (e) {
+                            console.error("Image Processing Error:", e);
+                            showStatusMessage("Error processing image in browser.", 'error');
+                            setUIMode('upload');
+                            resolve(); 
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => {
+                    showStatusMessage("Error reading file.", 'error');
+                    setUIMode('upload');
+                    resolve();
+                };
+                reader.readAsDataURL(file);
+            });
+        };
 
-                    if (response.ok) {
-                        const result = await response.json();
-                        responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response received from AI model.";
-                        break; 
-                    } else if (i < 2) {
-                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-                    } else {
-                        throw new Error(`API call failed with status ${response.status} (Check API Key validity).`);
-                    }
-                }
-            } catch (error) {
-                console.error("Gemini API Error:", error);
-                responseText = "Sorry, the AI caption generator failed to connect or process your request. Please ensure your Gemini API Key is correct and try again later.";
-            } finally {
-                captionSpinner.classList.add('hidden');
-                magicWandIcon.classList.remove('hidden');
-                generateCaptionButton.disabled = false;
-                isGeneratingAI = false;
-            }
+        // --- AI Caption Generator Logic (Unchanged) ---
 
-            const captions = responseText.split('\n').filter(line => line.trim().length > 0);
-            
-            if (captions.length > 0 && captions[0] !== "Failed to generate captions.") {
-                captions.forEach((caption, index) => {
-                    const captionDiv = document.createElement('div');
-                    captionDiv.classList.add('ai-result-card', 'p-3', 'rounded-lg', 'text-gray-200', 'text-sm', 'break-words', 'flex', 'items-center', 'justify-between');
-                    const cleanedCaption = caption.replace(/^\d+\.\s*/, ''); 
-                    captionDiv.innerHTML = `
-                        <span class="mr-2 font-bold text-cyan-400">${index + 1}.</span>
-                        <span class="flex-grow">${cleanedCaption}</span>
-                        <button class="copy-btn ml-3 p-1 rounded-md bg-pink-600 hover:bg-pink-500 transition duration-200" title="Copy">
-                            <i data-lucide="copy" class="w-4 h-4 text-white"></i>
-                        </button>
-                    `;
-                    aiResultsContainer.appendChild(captionDiv);
-                });
-                lucide.createIcons();
-            } else {
-                 showStatusMessage(responseText, 'error');
-            }
-            
-            document.querySelectorAll('.copy-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const captionSpan = e.currentTarget.previousElementSibling;
-                    const captionText = captionSpan.textContent.trim();
-                    
-                    const textarea = document.createElement('textarea');
-                    textarea.value = captionText;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
+        const generateAICaptions = async () => {
+            if (isGeneratingAI) return;
+            const userPrompt = aiPromptInput.value.trim();
+            
+            if (API_KEY === "YOUR_GEMINI_API_KEY_HERE" || !API_KEY) {
+                showStatusMessage("CRITICAL: Please replace 'YOUR_GEMINI_API_KEY_HERE' in the code with a valid Gemini API Key to use the AI Caption Generator.", 'error');
+                return;
+            }
+            if (!userPrompt) {
+                showStatusMessage("Please describe your video/image content before generating captions.", 'error');
+                return;
+            }
 
-                    e.currentTarget.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-white"></i>';
-                    e.currentTarget.classList.remove('bg-pink-600');
-                    e.currentTarget.classList.add('bg-green-600');
-                    lucide.createIcons();
-                    
-                    setTimeout(() => {
-                        e.currentTarget.innerHTML = '<i data-lucide="copy" class="w-4 h-4 text-white"></i>';
-                        e.currentTarget.classList.remove('bg-green-600');
-                        e.currentTarget.classList.add('bg-pink-600');
-                        lucide.createIcons();
-                    }, 1000);
-                });
-            });
-        };
-        
-        // --- Event Listeners ---
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { startCompression(e.dataTransfer.files[0]); } });
-        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { startCompression(e.target.files[0]); } });
-        clearCaptionsButton.addEventListener('click', () => { aiResultsContainer.innerHTML = ''; showStatusMessage('AI Caption results cleared.', 'info'); });
-        generateCaptionButton.addEventListener('click', generateAICaptions);
-    </script>
+            isGeneratingAI = true;
+            aiResultsContainer.innerHTML = '';
+            captionSpinner.classList.remove('hidden');
+            magicWandIcon.classList.add('hidden');
+            generateCaptionButton.disabled = true;
+
+            const systemPrompt = "You are a creative social media manager specializing in short, viral video captions. Your task is to generate three unique, catchy, and status-ready captions based on the user's content description. Each caption must be distinct and ready to be used on platforms like WhatsApp or Instagram Stories. Format your final output as a numbered list.";
+            const userQuery = `Generate 3 captions for content described as: "${userPrompt}"`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                config: {
+                    systemInstruction: systemPrompt
+                }
+            };
+
+            let responseText = "Failed to generate captions.";
+            
+            try {
+                for (let i = 0; i < 3; i++) { 
+                    const response = await fetch(GEMINI_API_URL + API_KEY, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response received from AI model.";
+                        break; 
+                    } else if (i < 2) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                    } else {
+                        throw new Error(`API call failed with status ${response.status} (Check API Key validity).`);
+                    }
+                }
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                responseText = "Sorry, the AI caption generator failed to connect or process your request. Please ensure your Gemini API Key is correct and try again later.";
+            } finally {
+                captionSpinner.classList.add('hidden');
+                magicWandIcon.classList.remove('hidden');
+                generateCaptionButton.disabled = false;
+                isGeneratingAI = false;
+            }
+
+            const captions = responseText.split('\n').filter(line => line.trim().length > 0);
+            
+            if (captions.length > 0 && captions[0] !== "Failed to generate captions.") {
+                captions.forEach((caption, index) => {
+                    const captionDiv = document.createElement('div');
+                    captionDiv.classList.add('ai-result-card', 'p-3', 'rounded-lg', 'text-gray-200', 'text-sm', 'break-words', 'flex', 'items-center', 'justify-between');
+                    const cleanedCaption = caption.replace(/^\d+\.\s*/, ''); 
+                    captionDiv.innerHTML = `
+                        <span class="mr-2 font-bold text-cyan-400">${index + 1}.</span>
+                        <span class="flex-1">${cleanedCaption}</span>
+                        <button class="copy-btn ml-4 text-pink-400 hover:text-pink-300 transition duration-150" data-caption="${cleanedCaption.replace(/"/g, '&quot;')}">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    aiResultsContainer.appendChild(captionDiv);
+                    lucide.createIcons();
+                });
+                
+                // Add Copy Button Listeners
+                document.querySelectorAll('.copy-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const captionToCopy = e.currentTarget.dataset.caption;
+                        navigator.clipboard.writeText(captionToCopy)
+                            .then(() => {
+                                // Show temporary confirmation on the button itself
+                                const originalIcon = e.currentTarget.innerHTML;
+                                e.currentTarget.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-400"></i>';
+                                lucide.createIcons();
+                                setTimeout(() => {
+                                    e.currentTarget.innerHTML = originalIcon;
+                                    lucide.createIcons();
+                                }, 1500);
+                            })
+                            .catch(err => {
+                                console.error('Could not copy text: ', err);
+                            });
+                    });
+                });
+
+            } else {
+                showStatusMessage(responseText, 'error');
+            }
+        };
+
+        const clearAICaptions = () => {
+            aiResultsContainer.innerHTML = '';
+            aiPromptInput.value = '';
+            statusContainer.innerHTML = ''; // Clear main status messages too
+        };
+
+        // --- Event Listeners ---
+        
+        // Drop Zone functionality
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                const file = e.dataTransfer.files[0];
+                startCompression(file);
+            }
+        });
+
+        // File Input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                startCompression(e.target.files[0]);
+            }
+        });
+        
+        // AI Button Listeners
+        generateCaptionButton.addEventListener('click', generateAICaptions);
+        clearCaptionsButton.addEventListener('click', clearAICaptions);
+        
+        // Initialize UI
+        setUIMode('upload');
+        showStatusMessage('Ready to optimize your media. Select a file to begin.', 'info');
+
+    </script>
+
 </body>
 </html>
