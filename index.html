@@ -14,6 +14,7 @@
         .status { margin-top: 20px; padding: 10px; border-radius: 4px; font-weight: bold; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
     </style>
 </head>
 <body>
@@ -31,8 +32,9 @@
 
     <script>
         // --- Configuration ---
-        // 🚨 CRITICAL: Use your confirmed, working Cloud Run URL.
-        const OPTIMIZER_API_URL = 'https://status-optimizer-service-420017097259.asia-south1.run.app'; 
+        // ✅ FIXED: Changed URL from '-service' to the correct working format:
+        // 'https://status-optimizer-420017097259.asia-south1.run.app'
+        const OPTIMIZER_API_URL = 'https://status-optimizer-420017097259.asia-south1.run.app'; 
         // 🚨 CRITICAL: We are using the correct /optimize endpoint.
         const UPLOAD_ENDPOINT = '/optimize'; 
         const TIMEOUT_MS = 60000; // 60 seconds
@@ -81,6 +83,11 @@
 
                 if (!response.ok) {
                     const errorText = await response.text().catch(() => 'No response body.');
+                    // If server responds with 400 and "No file part", it means the connection is working!
+                    if (response.status === 400 && errorText.includes("No file part")) {
+                         setStatus(`Connection Test SUCCESS! Server responded with 400: ${errorText.substring(0, 150)}. This means the URL is correct and CORS is likely fixed. The file upload may still have issues.`, 'success');
+                         return;
+                    }
                     throw new Error(`Upload Failed: HTTP Status ${response.status}. Server Message: ${errorText.substring(0, 150)}`);
                 }
 
@@ -91,13 +98,15 @@
                 
             } catch (error) {
                 if (error.name === 'AbortError') {
-                    setStatus(`Error: Upload timed out after ${TIMEOUT_MS / 1000} seconds. The Cloud Run service may not be responding.`, 'error');
+                    setStatus(`Error: Upload timed out after ${TIMEOUT_MS / 1000} seconds. The Cloud Run service may be slow or unresponsive.`, 'error');
+                } else if (error.message.includes("Failed to fetch")) {
+                    // Re-testing for the critical CORS/Network error
+                    setStatus("Critical Error: Failed to fetch. **CORS or Network Block still active.** Please ensure 'flask-cors' is installed and deployed on Cloud Run.", 'error');
                 } else {
                     setStatus(`Critical Error: ${error.message || "An unknown network error occurred."}`, 'error');
                 }
             } finally {
                 uploadButton.disabled = false;
-                // Keep the file selected, allowing the user to re-upload easily
             }
         };
 
