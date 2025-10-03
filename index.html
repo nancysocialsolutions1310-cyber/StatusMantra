@@ -3,115 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Run Uploader (URL Fixed)</title>
+    <title>AI Media Optimizer (Robust Upload)</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { color: #007bff; margin-bottom: 20px; font-size: 1.5em; }
-        input[type="file"] { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; width: calc(100% - 20px); }
-        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; width: 100%; transition: background-color 0.3s; }
-        button:hover { background-color: #218838; }
-        .status { margin-top: 20px; padding: 10px; border-radius: 4px; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .info { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+        body { font-family: sans-serif; background-color: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: #161b22; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); width: 100%; max-width: 450px; text-align: center; }
+        h1 { color: #58a6ff; margin-bottom: 30px; font-size: 1.8em; }
+        input[type="file"] { margin-bottom: 20px; border: 1px solid #30363d; padding: 10px; border-radius: 6px; width: calc(100% - 22px); background-color: #0d1117; color: #c9d1d9; }
+        button { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; width: 100%; transition: background-color 0.3s; margin-bottom: 20px; }
+        button:hover:not(:disabled) { background-color: #218838; }
+        button:disabled { background-color: #30363d; cursor: not-allowed; }
+
+        /* Progress Bar Styling */
+        .progress-container { width: 100%; background-color: #30363d; border-radius: 4px; margin-top: 20px; overflow: hidden; height: 10px; }
+        .progress-bar { height: 10px; background-color: #58a6ff; width: 0%; transition: width 0.4s; }
+
+        /* Status Styling */
+        .status { margin-top: 20px; padding: 12px; border-radius: 6px; font-weight: bold; }
+        .success { background-color: #238636; color: #c9d1d9; border: 1px solid #30363d; }
+        .error { background-color: #6d2222; color: #f8d7da; border: 1px solid #30363d; }
+        .info { background-color: #1f6feb; color: #cce5ff; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Cloud Run Video Optimizer Test (URL Fixed)</h1>
+        <h1>Cloud Run Video Optimizer (XHR + Progress)</h1>
         
         <input type="file" id="file-input" accept="video/*,image/*">
         
         <button id="upload-button" disabled>Select a File to Enable Upload</button>
+
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
         
-        <div id="status-message" class="status">Waiting for file selection...</div>
+        <div id="status-message" class="status info">Waiting for file selection...</div>
 
     </div>
 
     <script>
         // --- Configuration ---
-        // ✅ FIXED URL: Using the correct, working URL identified from Cloud Shell (Asia-South1)
+        // ✅ CORRECT URL: Using the confirmed working Asia-South1 URL.
         const OPTIMIZER_API_URL = 'https://status-optimizer-420017097259.asia-south1.run.app'; 
         const UPLOAD_ENDPOINT = '/optimize'; 
-        const TIMEOUT_MS = 60000; // 60 seconds
+        // Increased timeout for 16MB file and processing
+        const TIMEOUT_MS = 180000; // 3 minutes 
 
         // --- UI Elements ---
         const fileInput = document.getElementById('file-input');
         const uploadButton = document.getElementById('upload-button');
         const statusMessage = document.getElementById('status-message');
-
+        const progressBar = document.getElementById('progress-bar');
+        
         // --- Utility Functions ---
         const setStatus = (message, type = 'info') => {
             statusMessage.textContent = message;
             statusMessage.className = `status ${type}`;
         };
 
-        const resetUI = () => {
-            uploadButton.disabled = true;
-            fileInput.value = '';
-            setStatus('Waiting for file selection...', 'info');
-        }
+        const updateProgress = (percent) => {
+            progressBar.style.width = `${percent}%`;
+        };
 
-        // --- Core Logic ---
-        const startUpload = async (file) => {
+        // --- Core Logic: Upload (using XHR for reliable Progress Tracking) ---
+
+        const startUpload = (file) => {
             if (!file) return setStatus("No file selected.", "error");
 
-            setStatus(`Uploading ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)... Please wait.`, 'info');
+            setStatus(`Uploading ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)...`, 'info');
             uploadButton.disabled = true;
+            updateProgress(0);
 
+            const xhr = new XMLHttpRequest();
             const formData = new FormData();
             formData.append('file', file);
 
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-                
-                const response = await fetch(OPTIMIZER_API_URL + UPLOAD_ENDPOINT, {
-                    method: 'POST',
-                    body: formData,
-                    signal: controller.signal,
-                });
+            xhr.open('POST', OPTIMIZER_API_URL + UPLOAD_ENDPOINT);
+            xhr.timeout = TIMEOUT_MS;
 
-                clearTimeout(timeoutId);
+            // 1. Progress Event Listener (The key for large files)
+            xhr.upload.addEventListener('progress', (e) => {
+                 if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    updateProgress(percent);
+                    setStatus(`Uploading... ${percent}% complete. (Total: ${(e.loaded / (1024*1024)).toFixed(2)} MB)`, 'info');
+                 }
+            });
 
-                if (!response.ok) {
-                    const errorText = await response.text().catch(() => 'No response body.');
-                    
-                    // Special check: If server responds with 400 and "No file part", connection is GOOD.
-                    if (response.status === 400 && errorText.includes("No file part")) {
-                         setStatus(`Connection SUCCESS! Server returned HTTP 400. This confirms the **URL is correct** and **CORS is likely fixed**. Next step: check your server logs for file handling issues.`, 'success');
-                         return;
-                    }
-                    throw new Error(`Upload Failed: HTTP Status ${response.status}. Server Message: ${errorText.substring(0, 150)}`);
-                }
-
-                const data = await response.json();
-                
-                setStatus(`SUCCESS! File uploaded and processing started. Response: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
-                
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    setStatus(`Error: Upload timed out after ${TIMEOUT_MS / 1000} seconds. The Cloud Run service may not be responding.`, 'error');
-                } else if (error.message.includes("Failed to fetch")) {
-                    // This means CORS is still blocking or a general network error (firewall/DNS) is occurring.
-                    setStatus("Critical Error: Failed to fetch. **CORS is STILL blocking** or there is a serious network issue. **Action: You MUST ensure 'flask-cors' is correctly applied in your Flask code and the container is REDEPLOYED.**", 'error');
-                } else {
-                    setStatus(`Critical Error: ${error.message || "An unknown network error occurred."}`, 'error');
-                }
-            } finally {
+            // 2. Load/Error Handlers
+            xhr.onload = () => {
                 uploadButton.disabled = false;
-            }
+                updateProgress(100); // Progress bar full after upload finishes
+                
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        setStatus(`SUCCESS! File uploaded. Server Response: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
+                    } catch (e) {
+                        setStatus(`Error: Server returned non-JSON/malformed response. HTTP ${xhr.status}. Response: ${xhr.responseText.substring(0, 100)}`, 'error');
+                    }
+                } else {
+                    setStatus(`Upload Failed. HTTP Status: ${xhr.status}. Response: ${xhr.responseText.substring(0, 100)}`, 'error');
+                }
+            };
+
+            xhr.ontimeout = () => {
+                uploadButton.disabled = false;
+                setStatus(`Error: Upload timed out after ${TIMEOUT_MS / 1000} seconds. The file may be too large or the server too slow.`, 'error');
+            };
+
+            xhr.onerror = () => {
+                uploadButton.disabled = false;
+                // This is the definite sign of CORS or a broken URL
+                setStatus("Critical Error: Failed to fetch. **CORS is STILL blocking**. You MUST check your Cloud Run logs and ensure 'flask-cors' is applied and redeployed.", 'error');
+            };
+
+            xhr.send(formData);
         };
 
         // --- Event Listeners ---
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length) {
                 const file = e.target.files[0];
                 uploadButton.disabled = false;
                 uploadButton.textContent = `Upload and Optimize: ${file.name}`;
-                setStatus(`File selected: ${file.name}. Click Upload.`, 'info');
+                setStatus(`File selected: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB). Click Upload.`, 'info');
+                updateProgress(0);
             } else {
                 uploadButton.disabled = true;
                 uploadButton.textContent = 'Select a File to Enable Upload';
@@ -127,7 +145,7 @@
         });
 
         // Initialize on load
-        resetUI();
+        updateProgress(0);
 
     </script>
 
