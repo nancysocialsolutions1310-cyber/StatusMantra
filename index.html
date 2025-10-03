@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Media Optimizer (Robust Upload)</title>
+    <title>AI Media Optimizer (Final Client)</title>
     <style>
         body { font-family: sans-serif; background-color: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background-color: #161b22; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); width: 100%; max-width: 450px; text-align: center; }
@@ -22,12 +22,17 @@
         .success { background-color: #238636; color: #c9d1d9; border: 1px solid #30363d; }
         .error { background-color: #6d2222; color: #f8d7da; border: 1px solid #30363d; }
         .info { background-color: #1f6feb; color: #cce5ff; border: 1px solid #30363d; }
+
+        /* Results */
+        #results-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #30363d; }
+        #results-section a { color: #58a6ff; text-decoration: none; display: block; padding: 8px; border: 1px solid #30363d; border-radius: 4px; margin-bottom: 8px; background-color: #21262d; }
+        #results-section a:hover { background-color: #30363d; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Cloud Run Video Optimizer (XHR + Progress)</h1>
+        <h1>Cloud Run Video Optimizer</h1>
         
         <input type="file" id="file-input" accept="video/*,image/*">
         
@@ -39,21 +44,26 @@
         
         <div id="status-message" class="status info">Waiting for file selection...</div>
 
+        <div id="results-section">
+            <h2 style="color: #58a6ff; font-size: 1.2em;">Optimized Downloads</h2>
+            <div id="download-links">No files processed yet.</div>
+        </div>
     </div>
 
     <script>
         // --- Configuration ---
-        // ✅ CORRECT URL: Using the confirmed working Asia-South1 URL.
+        // ✅ CORRECT URL: Confirmed working Asia-South1 URL
         const OPTIMIZER_API_URL = 'https://status-optimizer-420017097259.asia-south1.run.app'; 
         const UPLOAD_ENDPOINT = '/optimize'; 
-        // Increased timeout for 16MB file and processing
-        const TIMEOUT_MS = 180000; // 3 minutes 
+        const DOWNLOAD_ENDPOINT = '/download'; // New endpoint from your Python code
+        const TIMEOUT_MS = 180000; // 3 minutes
 
         // --- UI Elements ---
         const fileInput = document.getElementById('file-input');
         const uploadButton = document.getElementById('upload-button');
         const statusMessage = document.getElementById('status-message');
         const progressBar = document.getElementById('progress-bar');
+        const downloadLinksDiv = document.getElementById('download-links');
         
         // --- Utility Functions ---
         const setStatus = (message, type = 'info') => {
@@ -65,6 +75,22 @@
             progressBar.style.width = `${percent}%`;
         };
 
+        const displayDownloadLinks = (fileNames) => {
+            if (fileNames.length === 0) {
+                downloadLinksDiv.innerHTML = 'Optimization finished, but no output files found.';
+                return;
+            }
+            
+            downloadLinksDiv.innerHTML = '';
+            fileNames.forEach(name => {
+                const link = document.createElement('a');
+                link.href = `${OPTIMIZER_API_URL}${DOWNLOAD_ENDPOINT}/${name}`;
+                link.textContent = `Download: ${name}`;
+                link.target = '_blank';
+                downloadLinksDiv.appendChild(link);
+            });
+        };
+
         // --- Core Logic: Upload (using XHR for reliable Progress Tracking) ---
 
         const startUpload = (file) => {
@@ -72,50 +98,62 @@
 
             setStatus(`Uploading ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)...`, 'info');
             uploadButton.disabled = true;
+            downloadLinksDiv.innerHTML = 'Processing...';
             updateProgress(0);
 
             const xhr = new XMLHttpRequest();
             const formData = new FormData();
             formData.append('file', file);
+            // Optionally, add 'platform' form data if needed:
+            // formData.append('platform', 'whatsapp_status'); 
 
             xhr.open('POST', OPTIMIZER_API_URL + UPLOAD_ENDPOINT);
             xhr.timeout = TIMEOUT_MS;
 
-            // 1. Progress Event Listener (The key for large files)
+            // Progress Event Listener
             xhr.upload.addEventListener('progress', (e) => {
                  if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     updateProgress(percent);
-                    setStatus(`Uploading... ${percent}% complete. (Total: ${(e.loaded / (1024*1024)).toFixed(2)} MB)`, 'info');
+                    setStatus(`Uploading... ${percent}% complete.`, 'info');
                  }
             });
 
-            // 2. Load/Error Handlers
+            // Load/Error Handlers
             xhr.onload = () => {
                 uploadButton.disabled = false;
-                updateProgress(100); // Progress bar full after upload finishes
                 
                 if (xhr.status >= 200 && xhr.status < 300) {
+                    updateProgress(100); 
                     try {
                         const data = JSON.parse(xhr.responseText);
-                        setStatus(`SUCCESS! File uploaded. Server Response: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
+                        if (data.success && data.output_files) {
+                            setStatus(`SUCCESS! Optimization complete. Click links below to download.`, 'success');
+                            displayDownloadLinks(data.output_files);
+                        } else {
+                            setStatus(`Upload Successful, but Server Processing Error: ${data.error || 'Unknown.'}`, 'error');
+                            downloadLinksDiv.innerHTML = `Server Error: ${data.error || 'Check Cloud Run Logs.'}`;
+                        }
                     } catch (e) {
                         setStatus(`Error: Server returned non-JSON/malformed response. HTTP ${xhr.status}. Response: ${xhr.responseText.substring(0, 100)}`, 'error');
+                        downloadLinksDiv.innerHTML = 'Malformed Server Response.';
                     }
                 } else {
                     setStatus(`Upload Failed. HTTP Status: ${xhr.status}. Response: ${xhr.responseText.substring(0, 100)}`, 'error');
+                    downloadLinksDiv.innerHTML = `HTTP Error ${xhr.status}.`;
                 }
             };
 
             xhr.ontimeout = () => {
                 uploadButton.disabled = false;
-                setStatus(`Error: Upload timed out after ${TIMEOUT_MS / 1000} seconds. The file may be too large or the server too slow.`, 'error');
+                setStatus(`Error: Upload/Processing timed out after ${TIMEOUT_MS / 1000} seconds.`, 'error');
+                downloadLinksDiv.innerHTML = 'Timeout Error.';
             };
 
             xhr.onerror = () => {
                 uploadButton.disabled = false;
-                // This is the definite sign of CORS or a broken URL
-                setStatus("Critical Error: Failed to fetch. **CORS is STILL blocking**. You MUST check your Cloud Run logs and ensure 'flask-cors' is applied and redeployed.", 'error');
+                setStatus("Critical Error: Failed to connect. **CORS BLOCKING** or URL is wrong. **Action: Redeploy your Cloud Run service with CORS enabled.**", 'error');
+                downloadLinksDiv.innerHTML = 'Connection Error.';
             };
 
             xhr.send(formData);
@@ -130,6 +168,7 @@
                 uploadButton.textContent = `Upload and Optimize: ${file.name}`;
                 setStatus(`File selected: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB). Click Upload.`, 'info');
                 updateProgress(0);
+                downloadLinksDiv.innerHTML = 'No files processed yet.';
             } else {
                 uploadButton.disabled = true;
                 uploadButton.textContent = 'Select a File to Enable Upload';
